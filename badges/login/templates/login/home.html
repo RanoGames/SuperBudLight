@@ -1,0 +1,47 @@
+<!-- login/templates/login/home.html -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Главная</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+</head>
+<body>
+<div class="container mt-5">
+    <h2>Главная страница</h2>
+
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-success">{{ message }}</div>
+        {% endfor %}
+    {% endif %}
+
+    <p>Вы вошли как:
+        {% if user.profile.role == 'student' %}
+            <strong>Ученик</strong>
+        {% elif user.profile.role == 'teacher' %}
+            <strong>Педагог</strong>
+        {% else %}
+            <strong>Без роли</strong>
+        {% endif %}
+    </p>
+
+    {% if user.profile.role == 'student' %}
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5>Ваш профиль ученика:</h5>
+                <ul>
+                    <li><strong>Группа:</strong> {{ user.profile.group_name|default:"не указана" }}</li>
+                    <li><strong>Артель:</strong> {{ user.profile.artel|default:"не указана" }}</li>
+                    <li><strong>Звание:</strong> {{ user.profile.rank|default:"новичок" }}</li>
+                    <li><strong>Баланс:</strong> {{ user.profile.balance }}</li>
+                    <li><strong>Очки:</strong> {{ user.profile.rating_points }}</li>
+                    <li><strong>Дата рождения:</strong> {{ user.profile.birth_date|default:"не указана" }}</li>
+                </ul>
+            </div>
+        </div>
+    {% endif %}
+
+    <a href="{% url 'admin:logout' %}" class="btn btn-outline-danger mt-3">Выйти</a>
+</div>
+</body>
+</html>
