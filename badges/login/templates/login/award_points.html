@@ -1,0 +1,32 @@
+<!-- login/templates/login/award_points.html -->
+{% extends 'login/base.html' %}
+
+{% block title %}Начислить очки{% endblock %}
+
+{% block content %}
+<h2>Начислить очки активности</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        {{ form.student.label_tag }}
+        {{ form.student }}
+        {% if form.student.errors %}<div class="text-danger">{{ form.student.errors }}</div>{% endif %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.activity.label_tag }}
+        {{ form.activity }}
+        {% if form.activity.errors %}<div class="text-danger">{{ form.activity.errors }}</div>{% endif %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.points.label_tag }}
+        {{ form.points }}
+        {% if form.points.errors %}<div class="text-danger">{{ form.points.errors }}</div>{% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Начислить очки</button>
+    <a href="{% url 'login:home' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

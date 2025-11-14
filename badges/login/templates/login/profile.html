@@ -1,0 +1,64 @@
+<!-- login/templates/login/profile.html -->
+{% extends 'login/base.html' %}
+
+{% block title %}Мой профиль{% endblock %}
+
+{% block content %}
+<h2>Мой профиль</h2>
+
+<div class="card mt-4">
+    <div class="card-body">
+        <h5 class="card-title">
+            {{ user.get_full_name|default:user.username }}
+            <span class="badge bg-secondary ms-2">{{ profile.get_role_display }}</span>
+        </h5>
+
+        {% if profile.role == 'student' %}
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>ФИО:</strong> {{ user.get_full_name|default:"Не указано" }}</li>
+                <li class="list-group-item"><strong>Дата рождения:</strong> {{ profile.birth_date|date:"d.m.Y"|default:"Не указана" }}</li>
+                <li class="list-group-item"><strong>Группа:</strong> {{ profile.group.name|default:"Не назначена" }}</li>
+                <li class="list-group-item"><strong>Артель:</strong> {{ profile.artel|default:"—" }}</li>
+                <li class="list-group-item"><strong>Рейтинговые очки:</strong> {{ profile.rating_points }}</li>
+                <li class="list-group-item"><strong>Баланс:</strong> {{ profile.balance }}</li>
+                {% if profile.rank %}
+                    <li class="list-group-item"><strong>Звание:</strong> {{ profile.rank }}</li>
+                {% endif %}
+            </ul>
+
+            <h5 class="mt-4">Прогресс активности</h5>
+            {% for label, points, percent in activity_data %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between">
+                        <strong>{{ label }}</strong>
+                        <span>{{ points }} / {{ max_points }}</span>
+                    </div>
+                    <div class="progress" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ percent }}%;">
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+
+        {% elif profile.role == 'teacher' %}
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"><strong>ФИО:</strong> {{ user.get_full_name|default:"Не указано" }}</li>
+                <li class="list-group-item"><strong>Дата рождения:</strong> {{ profile.birth_date|date:"d.m.Y"|default:"Не указана" }}</li>
+            </ul>
+
+            <h6 class="mt-3">Группы, которые вы курируете:</h6>
+            {% if managed_groups %}
+                <ul class="list-group">
+                    {% for group in managed_groups %}
+                        <li class="list-group-item">{{ group.name }}</li>
+                    {% endfor %}
+                </ul>
+            {% else %}
+                <p class="text-muted">Вы пока не курируете ни одну группу.</p>
+            {% endif %}
+        {% endif %}
+    </div>
+</div>
+
+<a href="{% url 'login:home' %}" class="btn btn-secondary mt-3">← Назад</a>
+{% endblock %}

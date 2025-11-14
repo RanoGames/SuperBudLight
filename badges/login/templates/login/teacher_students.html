@@ -1,0 +1,47 @@
+<!-- login/templates/login/teacher_students.html -->
+{% extends 'login/base.html' %}
+
+{% block title %}Мои ученики{% endblock %}
+
+{% block content %}
+<h2>Мои ученики</h2>
+
+{% if students %}
+  <div class="table-responsive">
+    <table class="table table-striped table-bordered">
+      <thead>
+        <tr>
+          <th>ФИО / Логин</th>
+          <th>Группа</th>
+          <th>Баланс</th>
+          <th>Рейтинг</th>
+          <th>Артель</th>
+          <th>Звание</th> <!-- ← добавлено -->
+          <th>Действия</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for profile in students %}
+          <tr>
+            <td>{{ profile.user.get_full_name|default:profile.user.username }}</td>
+            <td>{{ profile.group.name }}</td>
+            <td>{{ profile.balance }}</td>
+            <td>{{ profile.rating_points }}</td>
+            <td>{{ profile.artel|default:"—" }}</td>
+            <td>{{ profile.rank|default:"—" }}</td> <!-- ← отображаем звание -->
+            <td>
+              <a href="{% url 'login:edit_student' profile.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+{% else %}
+  <div class="alert alert-warning">
+    В ваших группах пока нет учеников.
+  </div>
+{% endif %}
+
+<a href="{% url 'login:home' %}" class="btn btn-secondary mt-3">← Назад</a>
+{% endblock %}

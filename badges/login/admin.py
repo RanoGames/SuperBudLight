@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import UserProfile
+from .models import UserProfile, Group
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
@@ -13,7 +13,7 @@ class UserProfileInline(admin.StackedInline):
         'birth_date',
         'balance',
         'rating_points',
-        'group_name',
+        'group',  # ← изменено с group_name на group
         'artel',
         'rank'
     )
@@ -21,7 +21,11 @@ class UserProfileInline(admin.StackedInline):
 class UserAdmin(BaseUserAdmin):
     inlines = (UserProfileInline,)
 
-# Отключаем стандартную регистрацию User
 admin.site.unregister(User)
-# Регистрируем с нашим расширением
 admin.site.register(User, UserAdmin)
+
+@admin.register(Group)
+class GroupAdmin(admin.ModelAdmin):
+    list_display = ('name', 'teacher')
+    list_filter = ('teacher',)
+    search_fields = ('name',)

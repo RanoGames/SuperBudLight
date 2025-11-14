@@ -1,0 +1,89 @@
+<!-- login/templates/login/edit_student.html -->
+{% extends 'login/base.html' %}
+
+{% block title %}Редактировать {{ student.username }}{% endblock %}
+
+{% block content %}
+<h2>Редактировать профиль: {{ student.get_full_name|default:student.username }}</h2>
+
+<form method="post">
+    {% csrf_token %}
+
+    <!-- Основные данные -->
+    <div class="row mb-3">
+        <div class="col-md-6">
+            {{ form.birth_date.label_tag }}
+            {{ form.birth_date }}
+            {% if form.birth_date.errors %}<div class="text-danger">{{ form.birth_date.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-6">
+            {{ form.group.label_tag }}
+            {{ form.group }}
+            {% if form.group.errors %}<div class="text-danger">{{ form.group.errors }}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            {{ form.balance.label_tag }}
+            {{ form.balance }}
+            {% if form.balance.errors %}<div class="text-danger">{{ form.balance.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-6">
+            {{ form.rating_points.label_tag }}
+            {{ form.rating_points }}
+            {% if form.rating_points.errors %}<div class="text-danger">{{ form.rating_points.errors }}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="mb-3">
+        {{ form.artel.label_tag }}
+        {{ form.artel }}
+        {% if form.artel.errors %}<div class="text-danger">{{ form.artel.errors }}</div>{% endif %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.rank.label_tag }}
+        {{ form.rank }}
+        {% if form.rank.errors %}<div class="text-danger">{{ form.rank.errors }}</div>{% endif %}
+    </div>
+
+    <!-- === НОВЫЕ ПОЛЯ: очки по 5 категориям === -->
+    <h4 class="mt-4">Прогресс-бары (очки от 0 до 100)</h4>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            {{ form.volunteering_points.label_tag }}
+            {{ form.volunteering_points }}
+            {% if form.volunteering_points.errors %}<div class="text-danger">{{ form.volunteering_points.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-4">
+            {{ form.contests_points.label_tag }}
+            {{ form.contests_points }}
+            {% if form.contests_points.errors %}<div class="text-danger">{{ form.contests_points.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-4">
+            {{ form.academic_points.label_tag }}
+            {{ form.academic_points }}
+            {% if form.academic_points.errors %}<div class="text-danger">{{ form.academic_points.errors }}</div>{% endif %}
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-6">
+            {{ form.extracurricular_points.label_tag }}
+            {{ form.extracurricular_points }}
+            {% if form.extracurricular_points.errors %}<div class="text-danger">{{ form.extracurricular_points.errors }}</div>{% endif %}
+        </div>
+        <div class="col-md-6">
+            {{ form.projects_points.label_tag }}
+            {{ form.projects_points }}
+            {% if form.projects_points.errors %}<div class="text-danger">{{ form.projects_points.errors }}</div>{% endif %}
+        </div>
+    </div>
+
+    <!-- Кнопки -->
+    <button type="submit" class="btn btn-success">Сохранить</button>
+    <a href="{% url 'login:teacher_students' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}
