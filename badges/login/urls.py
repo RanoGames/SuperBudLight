@@ -13,4 +13,7 @@ urlpatterns = [
     path('award-points/', views.award_points_view, name='award_points'),
     path('rating/', views.rating_view, name='rating'),
     path('artel-rating/', views.artel_rating_view, name='artel_rating'),
+    path('achievements/manage/', views.manage_achievements_view, name='manage_achievements'),
+    path('achievements/', views.achievements_catalog_view, name='achievements_catalog'),
+    path('achievements/toggle/', views.toggle_displayed_achievement, name='toggle_displayed_achievement'),
 ]

@@ -18,7 +18,7 @@
                 <li class="list-group-item"><strong>ФИО:</strong> {{ user.get_full_name|default:"Не указано" }}</li>
                 <li class="list-group-item"><strong>Дата рождения:</strong> {{ profile.birth_date|date:"d.m.Y"|default:"Не указана" }}</li>
                 <li class="list-group-item"><strong>Группа:</strong> {{ profile.group.name|default:"Не назначена" }}</li>
-                <li class="list-group-item"><strong>Артель:</strong> {{ profile.artel|default:"—" }}</li>
+                <li class="list-group-item"><strong>Артель:</strong> {{ profile.get_artel_display|default:"—" }}</li>
                 <li class="list-group-item"><strong>Рейтинговые очки:</strong> {{ profile.rating_points }}</li>
                 <li class="list-group-item"><strong>Баланс:</strong> {{ profile.balance }}</li>
                 {% if profile.rank %}
@@ -39,6 +39,27 @@
                     </div>
                 </div>
             {% endfor %}
+
+            <!-- === ОТОБРАЖЕНИЕ ВЫБРАННЫХ ДОСТИЖЕНИЙ === -->
+            {% if displayed_achievements %}
+                <h5 class="mt-4">Мои достижения</h5>
+                <div class="d-flex flex-wrap gap-3 mt-2">
+                    {% for disp in displayed_achievements %}
+                        <div class="text-center" title="{{ disp.achievement.name }}">
+                            {% if disp.achievement.icon %}
+                                <img src="{{ disp.achievement.icon.url }}"
+                                     alt="{{ disp.achievement.name }}"
+                                     style="width: 64px; height: 64px; object-fit: contain; border: 1px solid #ddd; border-radius: 8px;">
+                            {% else %}
+                                <div style="width: 64px; height: 64px; background: #f8f9fa; display: flex; align-items: center; justify-content: center; border-radius: 8px;">
+                                    🏅
+                                </div>
+                            {% endif %}
+                            <small class="d-block mt-1">{{ disp.achievement.name }}</small>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
 
         {% elif profile.role == 'teacher' %}
             <ul class="list-group list-group-flush">

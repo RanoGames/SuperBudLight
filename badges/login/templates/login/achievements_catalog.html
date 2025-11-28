@@ -1,0 +1,76 @@
+{% extends 'login/base.html' %}
+
+{% block title %}Достижения{% endblock %}
+
+{% block content %}
+<h2>🏅 Все достижения</h2>
+<p>Здесь вы можете узнать, как получить достижения, и выбрать, какие из них показывать в профиле.</p>
+
+{% if achievements %}
+    <div class="row">
+    {% for ach in achievements %}
+        <div class="col-md-6 mb-4">
+            <div class="card {% if ach.id in earned_ids %}border-success{% else %}border-secondary{% endif %}">
+                {% if ach.icon %}
+                    <img src="{{ ach.icon.url }}" class="card-img-top" style="height: 120px; object-fit: contain;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">
+                        {{ ach.name }}
+                        {% if ach.id in earned_ids %}
+                            <span class="badge bg-success">Получено</span>
+                        {% endif %}
+                    </h5>
+                    <p><strong>Описание:</strong> {{ ach.description }}</p>
+                    <p><strong>Требования:</strong> {{ ach.requirements }}</p>
+
+                    {% if ach.id in earned_ids %}
+                        {% if ach.id in displayed_ids %}
+                            <button class="btn btn-warning btn-sm toggle-btn"
+                                    data-id="{{ ach.id }}" data-action="remove">
+                                Убрать из профиля
+                            </button>
+                        {% else %}
+                            <button class="btn btn-primary btn-sm toggle-btn"
+                                    data-id="{{ ach.id }}" data-action="add">
+                                Показывать в профиле
+                            </button>
+                        {% endif %}
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% else %}
+    <p>Нет доступных достижений.</p>
+{% endif %}
+
+<a href="{% url 'login:home' %}" class="btn btn-secondary">← Назад</a>
+
+<!-- JS для AJAX -->
+<script>
+document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+        const id = this.dataset.id;
+        const action = this.dataset.action;
+        fetch('{% url "login:toggle_displayed_achievement" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': '{{ csrf_token }}',
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: `achievement_id=${id}&action=${action}`
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload(); // простой способ — обновить страницу
+            } else {
+                alert('Ошибка: ' + (data.error || 'неизвестно'));
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

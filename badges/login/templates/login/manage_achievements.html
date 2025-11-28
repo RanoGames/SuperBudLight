@@ -1,0 +1,46 @@
+{% extends 'login/base.html' %}
+
+{% block title %}Управление достижениями{% endblock %}
+
+{% block content %}
+<h2>🎯 Управление достижениями</h2>
+
+<!-- Форма создания -->
+<div class="card mb-4">
+    <div class="card-header">
+        <h5>Создать новое достижение</h5>
+    </div>
+    <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {{ form.as_p }}
+            <button type="submit" class="btn btn-success">Создать</button>
+        </form>
+    </div>
+</div>
+
+<!-- Список -->
+<h3>Существующие достижения</h3>
+{% if achievements %}
+    <div class="row">
+    {% for ach in achievements %}
+        <div class="col-md-4 mb-3">
+            <div class="card">
+                {% if ach.icon %}
+                    <img src="{{ ach.icon.url }}" class="card-img-top" style="height: 128px; object-fit: contain;">
+                {% endif %}
+                <div class="card-body">
+                    <h5 class="card-title">{{ ach.name }}</h5>
+                    <p class="text-muted">{{ ach.description|truncatewords:15 }}</p>
+                    <small>Создал: {{ ach.created_by.username }}</small>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+    </div>
+{% else %}
+    <p>Нет созданных достижений.</p>
+{% endif %}
+
+<a href="{% url 'login:home' %}" class="btn btn-secondary">← Назад</a>
+{% endblock %}

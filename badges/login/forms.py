@@ -2,6 +2,9 @@
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from .models import UserProfile, Group
+from django import forms
+from django.contrib.auth.forms import AuthenticationForm
+from .models import UserProfile, Group, Achievement
 
 class CustomLoginForm(AuthenticationForm):
     username = forms.CharField(
@@ -111,3 +114,21 @@ class AwardPointsForm(forms.Form):
                 role='student',
                 group__teacher=teacher_user
             ).select_related('user', 'group')
+
+class AchievementForm(forms.ModelForm):
+    class Meta:
+        model = Achievement
+        fields = ['name', 'description', 'requirements', 'icon']
+        widgets = {
+            'name': forms.TextInput(attrs={'class': 'form-control'}),
+            'description': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            'requirements': forms.Textarea(attrs={'class': 'form-control', 'rows': 4}),
+            'icon': forms.FileInput(attrs={'class': 'form-control', 'accept': '.png'}),
+        }
+
+    def clean_icon(self):
+        icon = self.cleaned_data.get('icon')
+        if icon:
+            if not icon.name.lower().endswith('.png'):
+                raise forms.ValidationError("Разрешены только файлы формата PNG.")
+        return icon

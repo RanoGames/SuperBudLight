@@ -1,3 +1,4 @@
+<!-- login/templates/login/home.html -->
 {% extends 'login/base.html' %}
 
 {% block title %}Главная{% endblock %}
@@ -7,11 +8,9 @@
 <p>Ваша роль: <strong>{{ role|default:"не указана" }}</strong></p>
 
 <div class="mt-4">
-
     <a href="{% url 'login:profile' %}" class="btn btn-info">Мой профиль</a>
-
+    <a href="{% url 'login:achievements_catalog' %}" class="btn btn-outline-success ms-2">Достижения</a>
     <a href="{% url 'login:rating' %}" class="btn btn-warning ms-2">Рейтинг учеников</a>
-
     <a href="{% url 'login:artel_rating' %}" class="btn btn-secondary ms-2">
         Рейтинг артелей
     </a>
@@ -19,7 +18,7 @@
     {% if role == 'teacher' %}
         <a href="{% url 'login:teacher_students' %}" class="btn btn-primary ms-2">Мои ученики</a>
         <a href="{% url 'login:award_points' %}" class="btn btn-success ms-2">Начислить очки</a>
-
+        <a href="{% url 'login:manage_achievements' %}" class="btn btn-warning ms-2">Управление достижениями</a>
     {% elif role == 'student' %}
         <p class="mt-3">
             Вы — ученик. Ваша группа: {{ user.profile.group.name|default:"не назначена" }}
