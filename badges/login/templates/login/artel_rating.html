@@ -1,0 +1,40 @@
+{% extends 'login/base.html' %}
+
+{% block title %}Рейтинг артелей{% endblock %}
+
+{% block content %}
+<h2>Рейтинг артелей</h2>
+
+<p>
+  Сортировка по <strong>сумме рейтинговых очков участников</strong>.
+</p>
+
+<div class="table-responsive">
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th>
+        <th>Артель</th>
+        <th>Сумма очков</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for item in ratings %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ item.artel_name }}</td>
+        <td>{{ item.total_points|default:0 }}</td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" class="text-center text-muted">
+          Нет данных о рейтинге артелей.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<a href="{% url 'login:home' %}" class="btn btn-secondary mt-3">← Назад</a>
+{% endblock %}
