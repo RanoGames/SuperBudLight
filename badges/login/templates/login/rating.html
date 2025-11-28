@@ -9,7 +9,7 @@
 
 {% if current_user_rank and current_user_rank > 300 %}
   <div class="alert alert-info mb-4">
-    <strong>Вы:</strong> {{ current_user_profile.user.get_full_name|default:current_user_profile.user,username }}<br>
+    <strong>Вы:</strong> {{ current_user_profile.user.get_full_name|default:current_user_profile.user}}<br>
     <strong>Ваше место в общем рейтинге:</strong> #{{ current_user_rank }}<br>
     <strong>Рейтинговые очки:</strong> {{ current_user_profile.rating_points }}
   </div>
@@ -32,7 +32,7 @@
         {% for rank, student in top_300 %}
           <tr {% if student.user == request.user %}class="tabke-success fw-bold"{% endif %}>
             <td>{{ rank }}</td>
-            <td>{{ student.user.get_full_name|default:student.user,username }}</td>
+            <td>{{ student.user.get_full_name|default:student.user }}</td>
             <td>{{ student.rating_points }}</td>
           </tr>
         {% empty %}

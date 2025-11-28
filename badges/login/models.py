@@ -22,6 +22,12 @@ TITLES_BY_ACTIVITY = {
     'projects': 'Мастер проектов',
 }
 
+ARTEL_CHOICES = [
+    ("Artel 1", "Артель 1"),
+    ("Artel 2", "Артель 2"),
+    ("Artel 3", "Артель 3"),
+    ("Artel 4", "Артель 4"),
+]
 
 class Group(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="Название группы (класса)")
@@ -85,9 +91,8 @@ class UserProfile(models.Model):
         verbose_name="Группа (класс)"
     )
     artel = models.CharField(
-        max_length=100,
-        blank=True,
-        verbose_name="Артель"
+        max_length=20,
+        choices=ARTEL_CHOICES,
     )
     rank = models.CharField(
         max_length=100,  # увеличено на случай нескольких званий

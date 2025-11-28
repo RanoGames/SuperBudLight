@@ -12,4 +12,5 @@ urlpatterns = [
     path('student/<int:student_id>/edit/', views.edit_student_view, name='edit_student'),
     path('award-points/', views.award_points_view, name='award_points'),
     path('rating/', views.rating_view, name='rating'),
+    path('artel-rating/', views.artel_rating_view, name='artel_rating'),
 ]

@@ -1,11 +1,12 @@
 # login/views.py
+from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from .forms import CustomLoginForm, StudentProfileEditForm, AwardPointsForm
-from .models import UserProfile, Group, ACTIVITY_TITLES, ACTIVITY_MAX_POINTS
+from .models import UserProfile, Group, ACTIVITY_TITLES, ACTIVITY_MAX_POINTS, ARTEL_CHOICES
 
 
 def login_view(request):
@@ -152,3 +153,26 @@ def rating_view(request):
     }
 
     return render(request, 'login/rating.html', context)
+
+@login_required
+def artel_rating_view(request):
+    # Сумма рейтинговых баллов участников каждого артеля
+    ratings = (
+    UserProfile.objects
+    .exclude(artel__isnull=True)
+    .exclude(artel='')
+    .values('artel')
+    .annotate(total_points=Sum('rating_points'))
+    .order_by('-total_points')
+)
+
+
+    # Преобразуем machine-name → русское название
+    artel_verbose = dict(ARTEL_CHOICES)
+
+    for item in ratings:
+        item['artel_name'] = artel_verbose.get(item['artel'], item['artel'])
+
+    return render(request, 'login/artel_rating.html', {
+        'ratings': ratings
+    })
