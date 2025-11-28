@@ -93,6 +93,8 @@ class UserProfile(models.Model):
     artel = models.CharField(
         max_length=20,
         choices=ARTEL_CHOICES,
+        blank=True,  # ← разрешает пустое значение в формах
+        null=True,  # ← разрешает NULL в базе данных
     )
     rank = models.CharField(
         max_length=100,  # увеличено на случай нескольких званий

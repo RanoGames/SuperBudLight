@@ -13,8 +13,12 @@
             {% if user.is_authenticated %}
                 <div class="ms-auto">
                     <a href="{% url 'login:profile' %}" class="btn btn-outline-info btn-sm">Профиль</a>
-                    <!-- Можно добавить выход -->
-                    <!-- <a href="#" class="btn btn-outline-secondary btn-sm ms-2">Выйти</a> -->
+
+                    <form method="post" action="{% url 'login:logout' %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-outline-danger btn-sm ms-2">Выйти</button>
+                    </form>
+
                 </div>
             {% endif %}
         </div>

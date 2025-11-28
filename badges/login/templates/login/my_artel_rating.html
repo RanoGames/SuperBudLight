@@ -1,0 +1,50 @@
+{% extends 'login/base.html' %}
+
+{% block title %}Рейтинг вашей артели{% endblock %}
+
+{% block content %}
+<h2>Рейтинг артели «{{ artel_name }}»</h2>
+
+<p>Сортировка по <strong>рейтинговым очкам</strong>.</p>
+
+{% if current_user_rank %}
+  {% if current_user_rank <= 50 %}
+    <div class="alert alert-success mb-4 text-center">
+      <strong>Вы находитесь на #{{ current_user_rank }} месте в своей артели!</strong>
+    </div>
+  {% else %}
+    <div class="alert alert-info mb-4">
+      <strong>Вы:</strong> {{ current_user_profile.user.get_full_name|default:current_user_profile.user }}<br>
+      <strong>Ваше место в рейтинге артели:</strong> #{{ current_user_rank }}<br>
+      <strong>Рейтинговые очки:</strong> {{ current_user_profile.rating_points }}
+    </div>
+  {% endif %}
+{% endif %}
+
+<div class="table-responsive">
+  <table class="table table-striped table-bordered">
+    <thead class="table-dark">
+      <tr>
+        <th>#</th>
+        <th>ФИО</th>
+        <th>Очки</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for rank, student in top_students %}
+        <tr {% if student.user == request.user %}class="table-success fw-bold"{% endif %}>
+          <td>{{ rank }}</td>
+          <td>{{ student.user.get_full_name|default:student.user.username }}</td>
+          <td>{{ student.rating_points }}</td>
+        </tr>
+      {% empty %}
+        <tr>
+          <td colspan="3" class="text-center text-muted">Нет участников в этой артели.</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<a href="{% url 'login:home' %}" class="btn btn-secondary mt-3">← Назад</a>
+{% endblock %}

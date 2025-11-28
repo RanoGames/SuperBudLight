@@ -7,6 +7,11 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from .forms import CustomLoginForm, StudentProfileEditForm, AwardPointsForm
 from .models import UserProfile, Group, ACTIVITY_TITLES, ACTIVITY_MAX_POINTS, ARTEL_CHOICES, Achievement, UserAchievement, DisplayedAchievement
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from .forms import AchievementForm
+from django.conf import settings
+import os
 
 
 def login_view(request):
@@ -182,10 +187,47 @@ def artel_rating_view(request):
         'ratings': ratings
     })
 
+@login_required
+def my_artel_rating_view(request):
+    # Убедимся, что пользователь — ученик
+    if not (hasattr(request.user, 'profile') and request.user.profile.role == 'student'):
+        messages.error(request, "Только ученики могут просматривать рейтинг своей артели.")
+        return redirect('login:home')
 
-from .forms import AchievementForm
-from django.conf import settings
-import os
+    user_profile = request.user.profile
+    current_artel = user_profile.artel
+
+    if not current_artel:
+        messages.warning(request, "Вы не состоите ни в одной артели.")
+        return redirect('login:home')
+
+    # Получаем всех учеников из той же артели
+    artel_students = (
+        UserProfile.objects
+        .filter(role='student', artel=current_artel)
+        .select_related('user')
+        .order_by('-rating_points')
+    )
+
+    # Определяем позицию текущего пользователя
+    current_user_rank = None
+    top_students = []  # можно ограничить, например, top 50
+
+    for index, student in enumerate(artel_students, start=1):
+        if student.user == request.user:
+            current_user_rank = index
+        if index <= 50:
+            top_students.append((index, student))
+
+    context = {
+        'artel_name': dict(ARTEL_CHOICES).get(current_artel, current_artel),
+        'top_students': top_students,
+        'current_user_rank': current_user_rank,
+        'current_user_profile': user_profile,
+    }
+
+    return render(request, 'login/my_artel_rating.html', context)
+
 
 # === Учитель: управление достижениями ===
 @login_required
@@ -234,10 +276,6 @@ def achievements_catalog_view(request):
     }
     return render(request, 'login/achievements_catalog.html', context)
 
-
-# === AJAX: добавить/убрать из отображаемых ===
-from django.http import JsonResponse
-from django.views.decorators.http import require_POST
 
 @require_POST
 @login_required

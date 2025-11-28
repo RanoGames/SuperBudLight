@@ -24,7 +24,7 @@ class StudentProfileEditForm(forms.ModelForm):
             'rating_points',
             'group',
             'artel',
-            # 'rank',  # ← закомментируй, если звание только автоматическое
+            'rank',  # ← закомментируй, если звание только автоматическое
             'volunteering_points',
             'contests_points',
             'academic_points',
