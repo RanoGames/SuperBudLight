@@ -9,7 +9,7 @@ from .forms import CustomLoginForm, StudentProfileEditForm, AwardPointsForm
 from .models import UserProfile, Group, ACTIVITY_TITLES, ACTIVITY_MAX_POINTS, ARTEL_CHOICES, Achievement, UserAchievement, DisplayedAchievement
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .forms import AchievementForm
+from .forms import AchievementForm, AssignAchievementForm
 from django.conf import settings
 import os
 
@@ -65,10 +65,7 @@ def profile_view(request):
             percent = int((points / ACTIVITY_MAX_POINTS) * 100) if ACTIVITY_MAX_POINTS > 0 else 0
             activity_data.append((label, points, percent))
         context['activity_data'] = activity_data
-    displayed_achievements = DisplayedAchievement.objects.filter(
-        user=user
-    ).select_related('achievement')
-
+    displayed_achievements = DisplayedAchievement.objects.filter(user=user).select_related('achievement')
     context['displayed_achievements'] = displayed_achievements
 
     return render(request, 'login/profile.html', context)
@@ -229,7 +226,6 @@ def my_artel_rating_view(request):
     return render(request, 'login/my_artel_rating.html', context)
 
 
-# === Учитель: управление достижениями ===
 @login_required
 def manage_achievements_view(request):
     if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
@@ -246,42 +242,71 @@ def manage_achievements_view(request):
     else:
         form = AchievementForm()
 
-    achievements = Achievement.objects.all()
+    achievements = Achievement.objects.filter(created_by=request.user)
     return render(request, 'login/manage_achievements.html', {
         'form': form,
         'achievements': achievements
     })
 
 
-# === Ученик: все достижения ===
+@login_required
+def edit_achievement_view(request, achievement_id):
+    if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
+        raise PermissionDenied("Только педагоги могут редактировать достижения.")
+
+    achievement = get_object_or_404(Achievement, id=achievement_id, created_by=request.user)
+
+    if request.method == 'POST':
+        form = AchievementForm(request.POST, request.FILES, instance=achievement)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Достижение «{achievement.name}» успешно обновлено!")
+            return redirect('login:manage_achievements')
+    else:
+        form = AchievementForm(instance=achievement)
+
+    return render(request, 'login/edit_achievement.html', {'form': form, 'achievement': achievement})
+
+
+@login_required
+def delete_achievement_view(request, achievement_id):
+    if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
+        raise PermissionDenied("Только педагоги могут удалять достижения.")
+
+    achievement = get_object_or_404(Achievement, id=achievement_id, created_by=request.user)
+
+    if request.method == 'POST':
+        achievement_name = achievement.name
+        achievement.delete()
+        messages.success(request, f"Достижение «{achievement_name}» удалено.")
+        return redirect('login:manage_achievements')
+
+    return render(request, 'login/delete_achievement.html', {'achievement': achievement})
+
+
 @login_required
 def achievements_catalog_view(request):
-    # Все доступные достижения
     all_achievements = Achievement.objects.all()
 
-    # Полученные достижения текущего пользователя
     earned_ids = set(
         UserAchievement.objects.filter(user=request.user).values_list('achievement_id', flat=True)
     )
-
-    # Достижения, отображаемые в профиле
     displayed_ids = set(
         DisplayedAchievement.objects.filter(user=request.user).values_list('achievement_id', flat=True)
     )
 
-    context = {
+    return render(request, 'login/achievements_catalog.html', {
         'achievements': all_achievements,
         'earned_ids': earned_ids,
         'displayed_ids': displayed_ids,
-    }
-    return render(request, 'login/achievements_catalog.html', context)
+    })
 
 
 @require_POST
 @login_required
 def toggle_displayed_achievement(request):
     achievement_id = request.POST.get('achievement_id')
-    action = request.POST.get('action')  # 'add' или 'remove'
+    action = request.POST.get('action')
 
     try:
         achievement = Achievement.objects.get(id=achievement_id)
@@ -297,3 +322,36 @@ def toggle_displayed_achievement(request):
         return JsonResponse({'success': True})
     except Achievement.DoesNotExist:
         return JsonResponse({'error': 'Достижение не найдено'}, status=404)
+
+@login_required
+def assign_achievement_view(request):
+    if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
+        raise PermissionDenied("Только педагоги могут назначать достижения.")
+
+    if request.method == 'POST':
+        form = AssignAchievementForm(request.POST, teacher_user=request.user)
+        if form.is_valid():
+            student_profile = form.cleaned_data['student']
+            achievement = form.cleaned_data['achievement']
+
+            # Проверка: ученик уже имеет это достижение?
+            obj, created = UserAchievement.objects.get_or_create(
+                user=student_profile.user,
+                achievement=achievement
+            )
+
+            if created:
+                messages.success(
+                    request,
+                    f"Достижение «{achievement.name}» успешно назначено ученику {student_profile.user.username}."
+                )
+            else:
+                messages.info(
+                    request,
+                    f"Ученик {student_profile.user.username} уже имеет это достижение."
+                )
+            return redirect('login:assign_achievement')
+    else:
+        form = AssignAchievementForm(teacher_user=request.user)
+
+    return render(request, 'login/assign_achievement.html', {'form': form})

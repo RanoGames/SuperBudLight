@@ -137,7 +137,6 @@ class UserProfile(models.Model):
             self.save(update_fields=['rank'])
 
 def achievement_icon_upload_to(instance, filename):
-    # Сохраняем как: achievements/icons/<название>.png
     safe_name = instance.name.replace(" ", "_").replace("/", "_")
     return f'achievements/icons/{safe_name}.png'
 
@@ -184,7 +183,6 @@ class UserAchievement(models.Model):
 
 
 class DisplayedAchievement(models.Model):
-    """Достижения, выбранные учеником для отображения в профиле"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='displayed_achievements')
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
     display_order = models.PositiveIntegerField(default=0, verbose_name="Порядок отображения")

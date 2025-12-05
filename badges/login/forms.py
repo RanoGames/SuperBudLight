@@ -132,3 +132,30 @@ class AchievementForm(forms.ModelForm):
             if not icon.name.lower().endswith('.png'):
                 raise forms.ValidationError("Разрешены только файлы формата PNG.")
         return icon
+
+# login/forms.py — добавь в конец
+
+class AssignAchievementForm(forms.Form):
+    student = forms.ModelChoiceField(
+        queryset=UserProfile.objects.none(),
+        label="Ученик",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+    achievement = forms.ModelChoiceField(
+        queryset=Achievement.objects.none(),
+        label="Достижение",
+        widget=forms.Select(attrs={'class': 'form-control'})
+    )
+
+    def __init__(self, *args, **kwargs):
+        teacher_user = kwargs.pop('teacher_user', None)
+        super().__init__(*args, **kwargs)
+        if teacher_user:
+            # Только ученики из групп учителя
+            self.fields['student'].queryset = UserProfile.objects.filter(
+                role='student',
+                group__teacher=teacher_user
+            ).select_related('user', 'group')
+            # Только достижения, созданные этим учителем (или все — по желанию)
+            self.fields['achievement'].queryset = Achievement.objects.all()
+

@@ -18,6 +18,7 @@
         <a href="{% url 'login:teacher_students' %}" class="btn btn-primary">Мои ученики</a>
         <a href="{% url 'login:award_points' %}" class="btn btn-success">Начислить очки</a>
         <a href="{% url 'login:manage_achievements' %}" class="btn btn-warning">Управление достижениями</a>
+        <a href="{% url 'login:assign_achievement' %}" class="btn btn-info ms-2">Назначить достижение</a>
     {% elif role == 'student' %}
         <div class="mt-3 w-100">
             <p class="mb-1">
