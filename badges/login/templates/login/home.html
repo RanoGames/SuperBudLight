@@ -1,14 +1,29 @@
 <!-- login/templates/login/home.html -->
+
 {% extends 'login/base.html' %}
 
 {% block title %}Главная{% endblock %}
 
 {% block content %}
+
 <h2>Добро пожаловать, {{ user.get_full_name|default:user.username }}!</h2>
 <p>Ваша роль: <strong>{{ role|default:"не указана" }}</strong></p>
 
+<!-- Если ученик, показываем его баланс прямо на главной -->
+{% if role == 'student' %}
+    <div class="alert alert-success d-inline-block py-1 px-3 mb-3">
+        Баланс: <strong>{{ user.profile.balance }} 💵</strong>
+    </div>
+{% endif %}
+
 <div class="mt-4 d-flex flex-wrap gap-2">
     <a href="{% url 'login:profile' %}" class="btn btn-info">Мой профиль</a>
+
+    <!-- НОВАЯ КНОПКА МАГАЗИНА -->
+    <a href="{% url 'login:shop' %}" class="btn btn-primary position-relative">
+        🏪 Магазин
+    </a>
+
     <a href="{% url 'login:achievements_catalog' %}" class="btn btn-outline-success">Достижения</a>
     <a href="{% url 'login:rating' %}" class="btn btn-danger">Рейтинг учеников</a>
     <a href="{% url 'login:artel_rating' %}" class="btn btn-secondary">Рейтинг артелей</a>
