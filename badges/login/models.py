@@ -15,7 +15,7 @@ ACTIVITY_TITLES = {
 }
 
 TITLES_BY_ACTIVITY = {
-    'volunteering': 'Волонтёр года',
+    'volunteering': 'Волонтер года',
     'contests': 'Чемпион конкурсов',
     'academic': 'Золотой студент',
     'extracurricular': 'Активист школы',
