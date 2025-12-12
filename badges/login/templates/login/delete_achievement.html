@@ -1,0 +1,15 @@
+{% extends 'login/base.html' %}
+
+{% block title %}Удалить достижение{% endblock %}
+
+{% block content %}
+<h2>⚠️ Удалить достижение</h2>
+
+<p>Вы уверены, что хотите удалить <strong>{{ achievement.name }}</strong>?</p>
+
+<form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Да, удалить</button>
+    <a href="{% url 'login:manage_achievements' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}

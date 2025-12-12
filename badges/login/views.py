@@ -5,13 +5,22 @@ from django.contrib.auth import authenticate, login
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
-from .forms import CustomLoginForm, StudentProfileEditForm, AwardPointsForm
-from .models import UserProfile, Group, ACTIVITY_TITLES, ACTIVITY_MAX_POINTS, ARTEL_CHOICES, Achievement, UserAchievement, DisplayedAchievement
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
-from .forms import AchievementForm
+from .models import ShopCategory, ShopItem, Purchase
 from django.conf import settings
 import os
+
+from .forms import (
+    CustomLoginForm, StudentProfileEditForm, AwardPointsForm,
+    AchievementForm, AssignAchievementForm
+)
+# Добавлены импорты ShopItem и Purchase
+from .models import (
+    UserProfile, Group, Achievement, UserAchievement, DisplayedAchievement,
+    ShopItem, Purchase,
+    ACTIVITY_TITLES, ACTIVITY_MAX_POINTS, ARTEL_CHOICES
+)
 
 
 def login_view(request):
@@ -58,17 +67,13 @@ def profile_view(request):
         context['managed_groups'] = managed_groups
 
     elif profile.role == 'student':
-        # Подготавливаем данные для прогресс-баров
         activity_data = []
         for key, label in ACTIVITY_TITLES.items():
             points = getattr(profile, f"{key}_points")
             percent = int((points / ACTIVITY_MAX_POINTS) * 100) if ACTIVITY_MAX_POINTS > 0 else 0
             activity_data.append((label, points, percent))
         context['activity_data'] = activity_data
-    displayed_achievements = DisplayedAchievement.objects.filter(
-        user=user
-    ).select_related('achievement')
-
+    displayed_achievements = DisplayedAchievement.objects.filter(user=user).select_related('achievement')
     context['displayed_achievements'] = displayed_achievements
 
     return render(request, 'login/profile.html', context)
@@ -89,7 +94,6 @@ def teacher_students_view(request):
 
 
 @login_required
-@login_required
 def edit_student_view(request, student_id):
     if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
         raise PermissionDenied("Только педагоги могут редактировать учеников.")
@@ -103,7 +107,7 @@ def edit_student_view(request, student_id):
         form = StudentProfileEditForm(request.POST, instance=student_profile, teacher_user=request.user)
         if form.is_valid():
             student_profile = form.save()
-            student_profile.update_rank_if_needed()  # ← ключевая строка
+            student_profile.update_rank_if_needed()
             messages.success(request, f"Профиль {student_profile.user.username} успешно обновлён.")
             return redirect('login:teacher_students')
     else:
@@ -125,29 +129,55 @@ def award_points_view(request):
         if form.is_valid():
             student_profile = form.cleaned_data['student']
             activity = form.cleaned_data['activity']
-            points = form.cleaned_data['points']
+            points_to_add = form.cleaned_data['points']
 
-            current = getattr(student_profile, f"{activity}_points")
-            new_value = min(current + points, ACTIVITY_MAX_POINTS)
-            setattr(student_profile, f"{activity}_points", new_value)
-            student_profile.save(update_fields=[f"{activity}_points"])
+            # 1. Получаем текущее значение очков в категории
+            current_activity_points = getattr(student_profile, f"{activity}_points")
 
-            student_profile.update_rank_if_needed()
+            # 2. Считаем новое значение (не больше максимума, например, 100)
+            new_activity_points = min(current_activity_points + points_to_add, ACTIVITY_MAX_POINTS)
 
-            messages.success(
-                request,
-                f"Ученику {student_profile.user.username} начислено {points} очков в категории «{dict(form.ACTIVITY_CHOICES)[activity]}»."
-            )
+            # 3. Вычисляем РЕАЛЬНУЮ разницу (Delta)
+            # Например, если было 95, а добавляем 10 (лимит 100), то реально добавится только 5.
+            delta = new_activity_points - current_activity_points
+
+            if delta > 0:
+                # Обновляем очки категории
+                setattr(student_profile, f"{activity}_points", new_activity_points)
+
+                # Обновляем общий рейтинг
+                student_profile.rating_points += delta
+
+                # Обновляем баланс (на ту же сумму)
+                student_profile.balance += delta
+
+                # Сохраняем все изменения одним запросом
+                student_profile.save()
+
+                # Обновляем звание (ранг)
+                student_profile.update_rank_if_needed()
+
+                messages.success(
+                    request,
+                    f"Ученику {student_profile.user.username} начислено {delta} очков. "
+                    f"Баланс пополнен на {delta} монет."
+                )
+            else:
+                messages.warning(
+                    request,
+                    f"Очки не начислены: достигнут лимит ({ACTIVITY_MAX_POINTS}) в категории «{dict(form.ACTIVITY_CHOICES)[activity]}»."
+                )
+
             return redirect('login:award_points')
     else:
         form = AwardPointsForm(teacher_user=request.user)
 
     return render(request, 'login/award_points.html', {'form': form})
 
+
 @login_required
 def rating_view(request):
     students = UserProfile.objects.filter(role='student').order_by('-rating_points')
-
     top_300 = []
     current_user_rank = None
 
@@ -161,35 +191,28 @@ def rating_view(request):
         'current_user_profile': request.user.profile,
         'current_user_rank': current_user_rank,
     }
-
     return render(request, 'login/rating.html', context)
+
 
 @login_required
 def artel_rating_view(request):
-    # Сумма рейтинговых баллов участников каждого артеля
     ratings = (
-    UserProfile.objects
-    .exclude(artel__isnull=True)
-    .exclude(artel='')
-    .values('artel')
-    .annotate(total_points=Sum('rating_points'))
-    .order_by('-total_points')
-)
-
-
-    # Преобразуем machine-name → русское название
+        UserProfile.objects
+        .exclude(artel__isnull=True)
+        .exclude(artel='')
+        .values('artel')
+        .annotate(total_points=Sum('rating_points'))
+        .order_by('-total_points')
+    )
     artel_verbose = dict(ARTEL_CHOICES)
-
     for item in ratings:
         item['artel_name'] = artel_verbose.get(item['artel'], item['artel'])
 
-    return render(request, 'login/artel_rating.html', {
-        'ratings': ratings
-    })
+    return render(request, 'login/artel_rating.html', {'ratings': ratings})
+
 
 @login_required
 def my_artel_rating_view(request):
-    # Убедимся, что пользователь — ученик
     if not (hasattr(request.user, 'profile') and request.user.profile.role == 'student'):
         messages.error(request, "Только ученики могут просматривать рейтинг своей артели.")
         return redirect('login:home')
@@ -201,7 +224,6 @@ def my_artel_rating_view(request):
         messages.warning(request, "Вы не состоите ни в одной артели.")
         return redirect('login:home')
 
-    # Получаем всех учеников из той же артели
     artel_students = (
         UserProfile.objects
         .filter(role='student', artel=current_artel)
@@ -209,9 +231,8 @@ def my_artel_rating_view(request):
         .order_by('-rating_points')
     )
 
-    # Определяем позицию текущего пользователя
     current_user_rank = None
-    top_students = []  # можно ограничить, например, top 50
+    top_students = []
 
     for index, student in enumerate(artel_students, start=1):
         if student.user == request.user:
@@ -225,11 +246,9 @@ def my_artel_rating_view(request):
         'current_user_rank': current_user_rank,
         'current_user_profile': user_profile,
     }
-
     return render(request, 'login/my_artel_rating.html', context)
 
 
-# === Учитель: управление достижениями ===
 @login_required
 def manage_achievements_view(request):
     if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
@@ -246,42 +265,69 @@ def manage_achievements_view(request):
     else:
         form = AchievementForm()
 
-    achievements = Achievement.objects.all()
+    achievements = Achievement.objects.filter(created_by=request.user)
     return render(request, 'login/manage_achievements.html', {
         'form': form,
         'achievements': achievements
     })
 
 
-# === Ученик: все достижения ===
+@login_required
+def edit_achievement_view(request, achievement_id):
+    if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
+        raise PermissionDenied("Только педагоги могут редактировать достижения.")
+
+    achievement = get_object_or_404(Achievement, id=achievement_id, created_by=request.user)
+
+    if request.method == 'POST':
+        form = AchievementForm(request.POST, request.FILES, instance=achievement)
+        if form.is_valid():
+            form.save()
+            messages.success(request, f"Достижение «{achievement.name}» успешно обновлено!")
+            return redirect('login:manage_achievements')
+    else:
+        form = AchievementForm(instance=achievement)
+
+    return render(request, 'login/edit_achievement.html', {'form': form, 'achievement': achievement})
+
+
+@login_required
+def delete_achievement_view(request, achievement_id):
+    if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
+        raise PermissionDenied("Только педагоги могут удалять достижения.")
+
+    achievement = get_object_or_404(Achievement, id=achievement_id, created_by=request.user)
+
+    if request.method == 'POST':
+        achievement_name = achievement.name
+        achievement.delete()
+        messages.success(request, f"Достижение «{achievement_name}» удалено.")
+        return redirect('login:manage_achievements')
+
+    return render(request, 'login/delete_achievement.html', {'achievement': achievement})
+
+
 @login_required
 def achievements_catalog_view(request):
-    # Все доступные достижения
     all_achievements = Achievement.objects.all()
-
-    # Полученные достижения текущего пользователя
     earned_ids = set(
         UserAchievement.objects.filter(user=request.user).values_list('achievement_id', flat=True)
     )
-
-    # Достижения, отображаемые в профиле
     displayed_ids = set(
         DisplayedAchievement.objects.filter(user=request.user).values_list('achievement_id', flat=True)
     )
-
-    context = {
+    return render(request, 'login/achievements_catalog.html', {
         'achievements': all_achievements,
         'earned_ids': earned_ids,
         'displayed_ids': displayed_ids,
-    }
-    return render(request, 'login/achievements_catalog.html', context)
+    })
 
 
 @require_POST
 @login_required
 def toggle_displayed_achievement(request):
     achievement_id = request.POST.get('achievement_id')
-    action = request.POST.get('action')  # 'add' или 'remove'
+    action = request.POST.get('action')
 
     try:
         achievement = Achievement.objects.get(id=achievement_id)
@@ -297,3 +343,97 @@ def toggle_displayed_achievement(request):
         return JsonResponse({'success': True})
     except Achievement.DoesNotExist:
         return JsonResponse({'error': 'Достижение не найдено'}, status=404)
+
+
+@login_required
+def assign_achievement_view(request):
+    if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
+        raise PermissionDenied("Только педагоги могут назначать достижения.")
+
+    if request.method == 'POST':
+        form = AssignAchievementForm(request.POST, teacher_user=request.user)
+        if form.is_valid():
+            student_profile = form.cleaned_data['student']
+            achievement = form.cleaned_data['achievement']
+
+            obj, created = UserAchievement.objects.get_or_create(
+                user=student_profile.user,
+                achievement=achievement
+            )
+
+            if created:
+                messages.success(
+                    request,
+                    f"Достижение «{achievement.name}» успешно назначено ученику {student_profile.user.username}."
+                )
+            else:
+                messages.info(
+                    request,
+                    f"Ученик {student_profile.user.username} уже имеет это достижение."
+                )
+            return redirect('login:assign_achievement')
+    else:
+        form = AssignAchievementForm(teacher_user=request.user)
+
+    return render(request, 'login/assign_achievement.html', {'form': form})
+
+
+# === НОВЫЕ VIEWS ДЛЯ МАГАЗИНА ===
+
+@login_required
+def shop_view(request):
+    """Страница магазина с категориями"""
+
+    # 1. Получаем все категории для меню
+    categories = ShopCategory.objects.all()
+
+    # 2. Получаем ID выбранной категории из URL (например, ?category=2)
+    category_id = request.GET.get('category')
+
+    # 3. Фильтруем товары
+    items = ShopItem.objects.filter(is_available=True)
+    if category_id:
+        items = items.filter(category_id=category_id)
+
+    # 4. История покупок
+    my_purchases = Purchase.objects.filter(user=request.user).select_related('item')
+
+    context = {
+        'categories': categories,
+        'active_category_id': int(category_id) if category_id else None,  # Чтобы подсветить кнопку
+        'items': items,
+        'my_purchases': my_purchases,
+        'user_balance': request.user.profile.balance if hasattr(request.user, 'profile') else 0
+    }
+    return render(request, 'login/shop.html', context)
+
+
+@login_required
+@require_POST
+def buy_item_view(request, item_id):
+    """Обработка покупки товара"""
+    # Проверка: только ученики могут покупать
+    if not hasattr(request.user, 'profile') or request.user.profile.role != 'student':
+        messages.error(request, "Только ученики могут совершать покупки.")
+        return redirect('login:shop')
+
+    item = get_object_or_404(ShopItem, id=item_id, is_available=True)
+    profile = request.user.profile
+
+    if profile.balance >= item.price:
+        # 1. Списываем средства
+        profile.balance -= item.price
+        profile.save(update_fields=['balance'])
+
+        # 2. Создаем запись о покупке
+        Purchase.objects.create(
+            user=request.user,
+            item=item,
+            price_at_moment=item.price
+        )
+
+        messages.success(request, f"Вы успешно купили «{item.name}»!")
+    else:
+        messages.error(request, "Недостаточно средств для покупки.")
+
+    return redirect('login:shop')

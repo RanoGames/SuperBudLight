@@ -4,21 +4,33 @@
 
 {% block content %}
 <h2>🏅 Все достижения</h2>
-<p>Здесь вы можете узнать, как получить достижения, и выбрать, какие из них показывать в профиле.</p>
 
 {% if achievements %}
     <div class="row">
     {% for ach in achievements %}
         <div class="col-md-6 mb-4">
-            <div class="card {% if ach.id in earned_ids %}border-success{% else %}border-secondary{% endif %}">
+            <div class="card
+                {% if ach.id in earned_ids %}
+                    border-success
+                {% else %}
+                    border-secondary opacity-50
+                {% endif %}"
+                style="{% if ach.id not in earned_ids %}background-color: #f8f9fa;{% endif %}">
+
                 {% if ach.icon %}
-                    <img src="{{ ach.icon.url }}" class="card-img-top" style="height: 120px; object-fit: contain;">
+                    <img src="{{ ach.icon.url }}"
+                         class="card-img-top"
+                         style="height: 120px; object-fit: contain;
+                                {% if ach.id not in earned_ids %}opacity: 0.5;{% endif %}">
                 {% endif %}
+
                 <div class="card-body">
                     <h5 class="card-title">
                         {{ ach.name }}
                         {% if ach.id in earned_ids %}
                             <span class="badge bg-success">Получено</span>
+                        {% else %}
+                            <span class="badge bg-secondary">Недоступно</span>
                         {% endif %}
                     </h5>
                     <p><strong>Описание:</strong> {{ ach.description }}</p>
@@ -48,7 +60,6 @@
 
 <a href="{% url 'login:home' %}" class="btn btn-secondary">← Назад</a>
 
-<!-- JS для AJAX -->
 <script>
 document.querySelectorAll('.toggle-btn').forEach(btn => {
     btn.addEventListener('click', function() {
@@ -65,7 +76,7 @@ document.querySelectorAll('.toggle-btn').forEach(btn => {
         .then(response => response.json())
         .then(data => {
             if (data.success) {
-                location.reload(); // простой способ — обновить страницу
+                location.reload();
             } else {
                 alert('Ошибка: ' + (data.error || 'неизвестно'));
             }

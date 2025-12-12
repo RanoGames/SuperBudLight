@@ -136,8 +136,22 @@ class UserProfile(models.Model):
             self.rank = new_rank
             self.save(update_fields=['rank'])
 
+
+    def save(self, *args, **kwargs):
+        # Проверяем, существует ли уже этот профиль в базе (редактирование, а не создание)
+        if self.pk:
+            try:
+                old_profile = UserProfile.objects.get(pk=self.pk)
+                # Если новый рейтинг больше старого
+                if self.rating_points > old_profile.rating_points:
+                    diff = self.rating_points - old_profile.rating_points
+                    self.balance += diff
+            except UserProfile.DoesNotExist:
+                pass
+
+        super().save(*args, **kwargs)
+
 def achievement_icon_upload_to(instance, filename):
-    # Сохраняем как: achievements/icons/<название>.png
     safe_name = instance.name.replace(" ", "_").replace("/", "_")
     return f'achievements/icons/{safe_name}.png'
 
@@ -184,7 +198,6 @@ class UserAchievement(models.Model):
 
 
 class DisplayedAchievement(models.Model):
-    """Достижения, выбранные учеником для отображения в профиле"""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='displayed_achievements')
     achievement = models.ForeignKey(Achievement, on_delete=models.CASCADE)
     display_order = models.PositiveIntegerField(default=0, verbose_name="Порядок отображения")
@@ -197,3 +210,53 @@ class DisplayedAchievement(models.Model):
 
     def __str__(self):
         return f"{self.user.username} → {self.achievement.name} (в профиле)"
+
+
+class ShopCategory(models.Model):
+    name = models.CharField(max_length=50, verbose_name="Название категории")
+
+    class Meta:
+        verbose_name = "Категория товаров"
+        verbose_name_plural = "Категории товаров"
+
+    def __str__(self):
+        return self.name
+
+
+class ShopItem(models.Model):
+    # Добавляем связь с категорией (null=True, чтобы старые товары не сломались)
+    category = models.ForeignKey(
+        ShopCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        verbose_name="Категория",
+        related_name="items"
+    )
+    name = models.CharField(max_length=100, verbose_name="Название товара")
+    description = models.TextField(verbose_name="Описание", blank=True)
+    price = models.PositiveIntegerField(verbose_name="Цена (в монетах)")
+    image = models.ImageField(upload_to='shop/', verbose_name="Изображение", blank=True, null=True)
+    is_available = models.BooleanField(default=True, verbose_name="Доступен для покупки")
+
+    class Meta:
+        verbose_name = "Товар"
+        verbose_name_plural = "Товары в магазине"
+
+    def __str__(self):
+        return f"{self.name} ({self.price})"
+
+class Purchase(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchases', verbose_name="Покупатель")
+    item = models.ForeignKey(ShopItem, on_delete=models.SET_NULL, null=True, verbose_name="Товар")
+    purchased_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата покупки")
+    price_at_moment = models.PositiveIntegerField(verbose_name="Цена на момент покупки")
+
+    class Meta:
+        verbose_name = "Покупка"
+        verbose_name_plural = "История покупок"
+        ordering = ['-purchased_at']
+
+    def __str__(self):
+        item_name = self.item.name if self.item else "Удалённый товар"
+        return f"{self.user.username} купил {item_name}"

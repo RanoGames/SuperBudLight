@@ -1,0 +1,28 @@
+<!-- login/templates/login/assign_achievement.html -->
+{% extends 'login/base.html' %}
+
+{% block title %}Назначить достижение{% endblock %}
+
+{% block content %}
+<h2>🎯 Назначить достижение ученику</h2>
+
+<form method="post">
+    {% csrf_token %}
+    <div class="mb-3">
+        {{ form.student.label_tag }}
+        {{ form.student }}
+        {% if form.student.errors %}<div class="text-danger">{{ form.student.errors }}</div>{% endif %}
+    </div>
+
+    <div class="mb-3">
+        {{ form.achievement.label_tag }}
+        {{ form.achievement }}
+        {% if form.achievement.errors %}<div class="text-danger">{{ form.achievement.errors }}</div>{% endif %}
+    </div>
+
+    <button type="submit" class="btn btn-success">Назначить</button>
+    <a href="{% url 'login:home' %}" class="btn btn-secondary">Отмена</a>
+</form>
+
+<a href="{% url 'login:manage_achievements' %}" class="btn btn-outline-primary mt-2">Управление достижениями</a>
+{% endblock %}

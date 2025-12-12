@@ -1,0 +1,14 @@
+{% extends 'login/base.html' %}
+
+{% block title %}Редактировать достижение{% endblock %}
+
+{% block content %}
+<h2>✏️ Редактировать: {{ achievement.name }}</h2>
+
+<form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-warning">Сохранить</button>
+    <a href="{% url 'login:manage_achievements' %}" class="btn btn-secondary">Отмена</a>
+</form>
+{% endblock %}
