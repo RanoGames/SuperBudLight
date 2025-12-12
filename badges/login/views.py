@@ -213,32 +213,44 @@ def artel_rating_view(request):
 
 @login_required
 def my_artel_rating_view(request):
-    if not (hasattr(request.user, 'profile') and request.user.profile.role == 'student'):
-        messages.error(request, "Только ученики могут просматривать рейтинг своей артели.")
+    # 1. Проверяем наличие профиля
+    if not hasattr(request.user, 'profile'):
+        messages.error(request, "Профиль не найден.")
         return redirect('login:home')
 
     user_profile = request.user.profile
     current_artel = user_profile.artel
 
+    # 2. Проверка: назначена ли артель (работает и для учителя, и для ученика)
     if not current_artel:
-        messages.warning(request, "Вы не состоите ни в одной артели.")
+        if user_profile.role == 'teacher':
+            msg = "В вашем профиле не указана Артель. Укажите её в админке, чтобы видеть рейтинг."
+        else:
+            msg = "Вы не состоите ни в одной артели."
+
+        messages.warning(request, msg)
         return redirect('login:home')
 
+    # 3. Получаем список студентов этой артели
+    # Учителя в рейтинг НЕ попадают (фильтр role='student'), но видят его.
     artel_students = (
         UserProfile.objects
         .filter(role='student', artel=current_artel)
-        .select_related('user')
+        .select_related('user', 'group')  # Оптимизация запросов
         .order_by('-rating_points')
     )
 
-    current_user_rank = None
+    # 4. Формируем список с местами
     top_students = []
+    current_user_rank = None
 
     for index, student in enumerate(artel_students, start=1):
+        # Если смотрит ученик, запоминаем его место
         if student.user == request.user:
             current_user_rank = index
-        if index <= 50:
-            top_students.append((index, student))
+
+        # Можно вывести всех или ограничить топ-100
+        top_students.append((index, student))
 
     context = {
         'artel_name': dict(ARTEL_CHOICES).get(current_artel, current_artel),
@@ -246,6 +258,7 @@ def my_artel_rating_view(request):
         'current_user_rank': current_user_rank,
         'current_user_profile': user_profile,
     }
+
     return render(request, 'login/my_artel_rating.html', context)
 
 
@@ -437,3 +450,4 @@ def buy_item_view(request, item_id):
         messages.error(request, "Недостаточно средств для покупки.")
 
     return redirect('login:shop')
+

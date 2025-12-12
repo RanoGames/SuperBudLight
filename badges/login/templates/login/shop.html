@@ -3,117 +3,108 @@
 {% block title %}Магазин{% endblock %}
 
 {% block content %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h2>🏪 Магазин наград</h2>
+        <p class="text-muted mb-0">Обменивай баллы на реальные призы!</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
+    </div>
+</div>
+
 <div class="row mb-4">
     <div class="col-md-8">
-        <h2>Магазин наград</h2>
-        <p class="text-muted">Обменивай баллы на призы!</p>
+        <ul class="nav nav-pills">
+            <li class="nav-item">
+                <a class="nav-link {% if not active_category_id %}active{% endif %}" href="{% url 'login:shop' %}">Все</a>
+            </li>
+            {% for cat in categories %}
+            <li class="nav-item ms-1">
+                <a class="nav-link {% if active_category_id == cat.id %}active{% endif %}" href="{% url 'login:shop' %}?category={{ cat.id }}">{{ cat.name }}</a>
+            </li>
+            {% endfor %}
+        </ul>
     </div>
-    <div class="col-md-4 text-end">
-        <div class="card bg-info text-white">
-            <div class="card-body py-2">
-                <h5 class="card-title mb-0">Твой баланс: {{ user_balance }} 🪙</h5>
-            </div>
-        </div>
+    <div class="col-md-4 text-end mt-3 mt-md-0">
+         <span class="badge bg-success fs-5 shadow-sm">Твой баланс: {{ user_balance }} 💵</span>
     </div>
 </div>
 
-<!-- Меню категорий -->
-<div class="mb-4">
-    <ul class="nav nav-pills">
-        <li class="nav-item">
-            <a class="nav-link {% if not active_category_id %}active{% endif %}" href="{% url 'login:shop' %}">
-                Все товары
-            </a>
-        </li>
-        {% for cat in categories %}
-        <li class="nav-item ms-1">
-            <a class="nav-link {% if active_category_id == cat.id %}active{% endif %}"
-               href="{% url 'login:shop' %}?category={{ cat.id }}">
-                {{ cat.name }}
-            </a>
-        </li>
-        {% endfor %}
-    </ul>
-</div>
-
-<!-- Список товаров -->
-<div class="row row-cols-1 row-cols-md-3 g-4">
+<div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
     {% for item in items %}
     <div class="col">
-        <div class="card h-100 shadow-sm">
+        <div class="card h-100 shadow-sm border-0">
             {% if item.image %}
                 <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 200px; object-fit: cover;">
             {% else %}
-                <div class="bg-secondary text-white d-flex align-items-center justify-content-center" style="height: 200px;">
-                    <span>Нет изображения</span>
+                <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="height: 200px;">
+                    📷 Нет фото
                 </div>
             {% endif %}
 
             <div class="card-body d-flex flex-column">
                 <div class="mb-2">
                     {% if item.category %}
-                        <span class="badge bg-secondary">{{ item.category.name }}</span>
+                        <span class="badge bg-secondary opacity-75">{{ item.category.name }}</span>
                     {% endif %}
                 </div>
                 <h5 class="card-title">{{ item.name }}</h5>
-                <p class="card-text flex-grow-1">{{ item.description|truncatewords:20 }}</p>
+                <p class="card-text text-muted small flex-grow-1">{{ item.description|truncatewords:15 }}</p>
 
-                <div class="d-flex justify-content-between align-items-center mt-3">
+                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
                     <span class="fs-5 fw-bold text-primary">{{ item.price }} 🪙</span>
 
                     {% if user.profile.role == 'student' %}
                         {% if user_balance >= item.price %}
                             <form action="{% url 'login:buy_item' item.id %}" method="post">
                                 {% csrf_token %}
-                                <button type="submit" class="btn btn-success" onclick="return confirm('Купить {{ item.name }} за {{ item.price }}?')">Купить</button>
+                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Купить {{ item.name }}?')">Купить</button>
                             </form>
                         {% else %}
-                            <button class="btn btn-secondary" disabled>Мало монет</button>
+                            <button class="btn btn-light btn-sm text-muted border" disabled>Не хватает</button>
                         {% endif %}
                     {% else %}
-                        <button class="btn btn-outline-secondary" disabled>Только для учеников</button>
+                        <button class="btn btn-outline-secondary btn-sm" disabled>Только для учеников</button>
                     {% endif %}
                 </div>
             </div>
         </div>
     </div>
     {% empty %}
-    <div class="col-12 text-center py-5">
-        <h4 class="text-muted">В этой категории пока пусто...</h4>
-        <a href="{% url 'login:shop' %}" class="btn btn-outline-primary mt-2">Показать все товары</a>
+    <div class="col-12">
+        <div class="alert alert-secondary text-center">В этой категории пока пусто.</div>
     </div>
     {% endfor %}
 </div>
 
-<hr class="my-5">
-
-<!-- История покупок (без изменений) -->
-<h3>Мои покупки</h3>
 {% if my_purchases %}
-    <div class="table-responsive">
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Товар</th>
-                    <th>Категория</th>
-                    <th>Дата</th>
-                    <th>Стоимость</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for purchase in my_purchases %}
-                <tr>
-                    <td>{{ purchase.item.name|default:"Удалён" }}</td>
-                    <td>{{ purchase.item.category.name|default:"-" }}</td>
-                    <td>{{ purchase.purchased_at|date:"d.m.Y H:i" }}</td>
-                    <td>{{ purchase.price_at_moment }} 🪙</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+<div class="card shadow-sm mt-5">
+    <div class="card-header bg-white">
+        <h5 class="mb-0">🛍️ Мои покупки</h5>
     </div>
-{% else %}
-    <p class="text-muted">Истории покупок нет.</p>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle">
+                <thead class="table-light">
+                    <tr>
+                        <th>Товар</th>
+                        <th>Дата</th>
+                        <th class="text-center">Цена</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for purchase in my_purchases %}
+                    <tr>
+                        <td>{{ purchase.item.name|default:"Товар удалён" }}</td>
+                        <td class="text-muted small">{{ purchase.purchased_at|date:"d.m.Y H:i" }}</td>
+                        <td class="text-center">{{ purchase.price_at_moment }} 💵</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 {% endif %}
-
 {% endblock %}

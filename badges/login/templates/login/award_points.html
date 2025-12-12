@@ -1,32 +1,51 @@
-<!-- login/templates/login/award_points.html -->
 {% extends 'login/base.html' %}
 
 {% block title %}Начислить очки{% endblock %}
 
 {% block content %}
-<h2>Начислить очки активности</h2>
-
-<form method="post">
-    {% csrf_token %}
-    <div class="mb-3">
-        {{ form.student.label_tag }}
-        {{ form.student }}
-        {% if form.student.errors %}<div class="text-danger">{{ form.student.errors }}</div>{% endif %}
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h2>➕ Начислить очки</h2>
+        <p class="text-muted mb-0">Выберите ученика и категорию активности.</p>
     </div>
-
-    <div class="mb-3">
-        {{ form.activity.label_tag }}
-        {{ form.activity }}
-        {% if form.activity.errors %}<div class="text-danger">{{ form.activity.errors }}</div>{% endif %}
+    <div class="col-auto">
+        <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
     </div>
+</div>
 
-    <div class="mb-3">
-        {{ form.points.label_tag }}
-        {{ form.points }}
-        {% if form.points.errors %}<div class="text-danger">{{ form.points.errors }}</div>{% endif %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Ученик</label>
+                        {{ form.student }}
+                        {% if form.student.errors %}<div class="text-danger small">{{ form.student.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Категория</label>
+                        {{ form.activity }}
+                        {% if form.activity.errors %}<div class="text-danger small">{{ form.activity.errors }}</div>{% endif %}
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Количество очков</label>
+                        {{ form.points }}
+                        {% if form.points.errors %}<div class="text-danger small">{{ form.points.errors }}</div>{% endif %}
+                        <div class="form-text">Максимум 100 очков за одну категорию.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-end gap-2">
+                        <a href="{% url 'login:home' %}" class="btn btn-light border">Отмена</a>
+                        <button type="submit" class="btn btn-success">Начислить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
     </div>
-
-    <button type="submit" class="btn btn-success">Начислить очки</button>
-    <a href="{% url 'login:home' %}" class="btn btn-secondary">Отмена</a>
-</form>
+</div>
 {% endblock %}

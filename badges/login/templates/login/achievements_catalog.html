@@ -3,51 +3,57 @@
 {% block title %}Достижения{% endblock %}
 
 {% block content %}
-<h2>🏅 Все достижения</h2>
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h2>🏅 Каталог достижений</h2>
+        <p class="text-muted mb-0">Все доступные награды и условия их получения.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
+    </div>
+</div>
 
 {% if achievements %}
-    <div class="row">
+    <div class="row g-4">
     {% for ach in achievements %}
-        <div class="col-md-6 mb-4">
-            <div class="card
-                {% if ach.id in earned_ids %}
-                    border-success
-                {% else %}
-                    border-secondary opacity-50
-                {% endif %}"
-                style="{% if ach.id not in earned_ids %}background-color: #f8f9fa;{% endif %}">
+        <div class="col-md-6 col-xl-4">
+            <div class="card h-100 shadow-sm border-0 {% if ach.id in earned_ids %}bg-white border-success border-2{% else %}bg-light{% endif %}"
+                 style="{% if ach.id in earned_ids %}border: 2px solid #198754 !important;{% endif %}">
 
-                {% if ach.icon %}
-                    <img src="{{ ach.icon.url }}"
-                         class="card-img-top"
-                         style="height: 120px; object-fit: contain;
-                                {% if ach.id not in earned_ids %}opacity: 0.5;{% endif %}">
-                {% endif %}
+                <div class="card-body text-center">
+                    {% if ach.icon %}
+                        <img src="{{ ach.icon.url }}" class="mb-3" style="height: 100px; object-fit: contain; {% if ach.id not in earned_ids %}filter: grayscale(100%); opacity: 0.6;{% endif %}">
+                    {% else %}
+                        <div class="mb-3 fs-1">🏅</div>
+                    {% endif %}
 
-                <div class="card-body">
-                    <h5 class="card-title">
-                        {{ ach.name }}
+                    <h5 class="card-title">{{ ach.name }}</h5>
+
+                    <div class="mb-3">
                         {% if ach.id in earned_ids %}
                             <span class="badge bg-success">Получено</span>
                         {% else %}
-                            <span class="badge bg-secondary">Недоступно</span>
+                            <span class="badge bg-secondary">Не получено</span>
                         {% endif %}
-                    </h5>
-                    <p><strong>Описание:</strong> {{ ach.description }}</p>
-                    <p><strong>Требования:</strong> {{ ach.requirements }}</p>
+                    </div>
+
+                    <p class="card-text small text-muted text-start border-top pt-2">
+                        <strong>Требование:</strong><br>
+                        {{ ach.requirements }}
+                    </p>
 
                     {% if ach.id in earned_ids %}
-                        {% if ach.id in displayed_ids %}
-                            <button class="btn btn-warning btn-sm toggle-btn"
-                                    data-id="{{ ach.id }}" data-action="remove">
-                                Убрать из профиля
-                            </button>
-                        {% else %}
-                            <button class="btn btn-primary btn-sm toggle-btn"
-                                    data-id="{{ ach.id }}" data-action="add">
-                                Показывать в профиле
-                            </button>
-                        {% endif %}
+                        <div class="mt-3">
+                            {% if ach.id in displayed_ids %}
+                                <button class="btn btn-outline-warning btn-sm w-100 toggle-btn" data-id="{{ ach.id }}" data-action="remove">
+                                    Скрыть из профиля
+                                </button>
+                            {% else %}
+                                <button class="btn btn-outline-primary btn-sm w-100 toggle-btn" data-id="{{ ach.id }}" data-action="add">
+                                    Показать в профиле
+                                </button>
+                            {% endif %}
+                        </div>
                     {% endif %}
                 </div>
             </div>
@@ -55,10 +61,8 @@
     {% endfor %}
     </div>
 {% else %}
-    <p>Нет доступных достижений.</p>
+    <div class="alert alert-info">Нет доступных достижений.</div>
 {% endif %}
-
-<a href="{% url 'login:home' %}" class="btn btn-secondary">← Назад</a>
 
 <script>
 document.querySelectorAll('.toggle-btn').forEach(btn => {
@@ -67,20 +71,11 @@ document.querySelectorAll('.toggle-btn').forEach(btn => {
         const action = this.dataset.action;
         fetch('{% url "login:toggle_displayed_achievement" %}', {
             method: 'POST',
-            headers: {
-                'X-CSRFToken': '{{ csrf_token }}',
-                'Content-Type': 'application/x-www-form-urlencoded',
-            },
+            headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded'},
             body: `achievement_id=${id}&action=${action}`
         })
         .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                location.reload();
-            } else {
-                alert('Ошибка: ' + (data.error || 'неизвестно'));
-            }
-        });
+        .then(data => { if (data.success) location.reload(); });
     });
 });
 </script>

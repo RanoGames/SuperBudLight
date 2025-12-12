@@ -1,47 +1,56 @@
-<!-- login/templates/login/teacher_students.html -->
 {% extends 'login/base.html' %}
 
 {% block title %}Мои ученики{% endblock %}
 
 {% block content %}
-<h2>Мои ученики</h2>
+<div class="row mb-4 align-items-center">
+    <div class="col">
+        <h2>👥 Мои ученики</h2>
+        <p class="text-muted mb-0">Управление профилями и просмотр статистики.</p>
+    </div>
+    <div class="col-auto">
+        <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
+    </div>
+</div>
 
-{% if students %}
-  <div class="table-responsive">
-    <table class="table table-striped table-bordered">
-      <thead>
-        <tr>
-          <th>ФИО / Логин</th>
-          <th>Группа</th>
-          <th>Баланс</th>
-          <th>Рейтинг</th>
-          <th>Артель</th>
-          <th>Звание</th> <!-- ← добавлено -->
-          <th>Действия</th>
-        </tr>
-      </thead>
-      <tbody>
-        {% for profile in students %}
-          <tr>
-            <td>{{ profile.user.get_full_name|default:profile.user.username }}</td>
-            <td>{{ profile.group.name }}</td>
-            <td>{{ profile.balance }}</td>
-            <td>{{ profile.rating_points }}</td>
-            <td>{{ profile.artel|default:"—" }}</td>
-            <td>{{ profile.rank|default:"—" }}</td> <!-- ← отображаем звание -->
-            <td>
-              <a href="{% url 'login:edit_student' profile.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
-            </td>
-          </tr>
-        {% endfor %}
-      </tbody>
-    </table>
-  </div>
-{% else %}
-  <div class="alert alert-warning">
-    В ваших группах пока нет учеников.
-  </div>
-{% endif %}
-
-<a href="{% url 'login:home' %}" class="btn btn-secondary mt-3">← Назад</a>
+<div class="card shadow-sm">
+    <div class="card-body p-0">
+        {% if students %}
+            <div class="table-responsive">
+                <table class="table table-hover mb-0 align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>ФИО / Логин</th>
+                            <th>Группа</th>
+                            <th class="text-center">Баланс</th>
+                            <th class="text-center">Рейтинг</th>
+                            <th>Артель</th>
+                            <th>Звание</th>
+                            <th class="text-end">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for profile in students %}
+                        <tr>
+                            <td class="fw-bold">{{ profile.user.get_full_name|default:profile.user.username }}</td>
+                            <td><span class="badge bg-light text-dark border">{{ profile.group.name }}</span></td>
+                            <td class="text-center text-success fw-bold">{{ profile.balance }}</td>
+                            <td class="text-center text-primary fw-bold">{{ profile.rating_points }}</td>
+                            <td>{{ profile.get_artel_display|default:"—" }}</td>
+                            <td><small class="text-muted">{{ profile.rank|default:"—" }}</small></td>
+                            <td class="text-end">
+                                <a href="{% url 'login:edit_student' profile.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="p-5 text-center text-muted">
+                <h4>В ваших группах пока нет учеников.</h4>
+            </div>
+        {% endif %}
+    </div>
+</div>
 {% endblock %}
