@@ -2,7 +2,7 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
-from .models import UserProfile, Group, ShopItem, Purchase, ShopCategory  # ← Добавлены ShopItem и Purchase
+from .models import UserProfile, Group, ShopItem, Purchase # ← Добавлены ShopItem и Purchase
 
 class UserProfileInline(admin.StackedInline):
     model = UserProfile
@@ -33,17 +33,13 @@ class GroupAdmin(admin.ModelAdmin):
 # === НОВЫЙ КОД ДЛЯ МАГАЗИНА ===
 @admin.register(ShopItem)
 class ShopItemAdmin(admin.ModelAdmin):
-    list_display = ('name', 'category', 'price', 'is_available') # добавили category
-    list_filter = ('category', 'is_available') # добавили фильтр справа
-    list_editable = ('price', 'is_available')
+    list_display = ('name', 'item_type', 'price', 'quantity', 'is_available')
+    list_filter = ('item_type', 'is_available')
+    list_editable = ('price', 'quantity', 'is_available', 'item_type')
     search_fields = ('name',)
 
 @admin.register(Purchase)
 class PurchaseAdmin(admin.ModelAdmin):
-    list_display = ('user', 'item', 'price_at_moment', 'purchased_at')
-    list_filter = ('purchased_at',)
+    list_display = ('user', 'item', 'price_at_moment', 'purchased_at', 'status')
+    list_filter = ('purchased_at', 'status')
     readonly_fields = ('purchased_at',)
-
-@admin.register(ShopCategory)
-class ShopCategoryAdmin(admin.ModelAdmin):
-    list_display = ('name',)

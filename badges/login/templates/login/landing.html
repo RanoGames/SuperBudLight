@@ -1,0 +1,718 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Геймификатор — Кванториум</title>
+    <link rel="icon" type="image/x-icon" href="{% static 'img/favicon.ico' %}">
+
+    <!-- Bootstrap 5 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Шрифты -->
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg-light: #F4F4F4;
+            --color-olive: #A4B66B;
+            --color-dark-olive: #5F733C;
+            --color-grey-card: #6E6E6E;
+            --color-yellow: #D9B80C;
+
+            /* Настройка шрифта: Montserrat везде */
+            --font-main: 'Montserrat', sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            font-family: var(--font-main);
+            color: #333;
+            overflow-x: hidden;
+
+            /* УВЕЛИЧЕННЫЙ ШРИФТ И ПОЛУЖИРНОСТЬ */
+            font-size: 1.3rem; /* Примерно 21-22px */
+            font-weight: 600;
+        }
+
+        /* === HEADER === */
+        .top-header {
+            background-color: #E0E0E0;
+            padding: 20px 0;
+            border-bottom: 1px solid #ccc;
+        }
+        .header-btn {
+            background-color: #D9D9D9;
+            border: none;
+            padding: 10px 30px; /* Кнопки побольше */
+            border-radius: 8px;
+            font-family: var(--font-main);
+            color: #333;
+            text-decoration: none;
+            transition: 0.3s;
+            font-weight: 700;
+        }
+        .header-btn:hover {
+            background-color: #bfbfbf;
+            color: #000;
+        }
+
+        /* === HERO SECTION === */
+        .hero-section {
+            padding: 120px 0;
+            text-align: center;
+            position: relative;
+        }
+        .hero-title {
+            font-size: 4.5rem; /* Еще крупнее */
+            text-transform: uppercase;
+            font-weight: 700;
+            margin-bottom: 15px;
+            line-height: 1.1;
+        }
+        .hero-subtitle {
+            font-size: 3rem;
+            font-weight: 600;
+            margin-bottom: 60px;
+        }
+        .btn-big-login {
+            background-color: var(--color-olive);
+            color: white;
+            font-size: 2.5rem;
+            padding: 20px 100px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            text-decoration: none;
+            font-weight: 700;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+        .btn-big-login:hover {
+            transform: scale(1.05);
+            color: white;
+        }
+
+        .decoration-container {
+            position: absolute;
+            right: 5%;
+            bottom: -50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .circle-text {
+            width: 220px; /* Круг побольше */
+            height: 220px;
+            background-color: #CFD99A;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 25px;
+            font-size: 1.1rem;
+            line-height: 1.3;
+            transform: rotate(-10deg);
+            font-weight: 700;
+        }
+        .arrow-draw {
+            width: 100px;
+            margin-bottom: -20px;
+            margin-left: -60px;
+        }
+
+        /* === SECTIONS COMMON === */
+        h2.section-title {
+            font-size: 4rem; /* Заголовки крупнее */
+            text-align: center;
+            margin-bottom: 60px;
+            margin-top: 100px;
+            font-weight: 700;
+        }
+
+        /* Утилитные классы */
+        .small-text {
+            font-size: 1.1rem; /* Текст в карточках тоже крупный */
+            line-height: 1.4;
+        }
+
+        /* === ABOUT GAME (CARDS) === */
+        .info-card {
+            border-radius: 25px;
+            padding: 35px;
+            color: white;
+            height: 100%;
+            position: relative;
+        }
+        .info-card h5 {
+            font-size: 1.8rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+        }
+        .card-number {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background-color: rgba(255,255,255,0.8);
+            color: #333;
+            padding: 5px 15px;
+            border-radius: 8px;
+            font-weight: 800;
+            font-size: 1.2rem;
+        }
+        .bg-olive {
+            background-color: var(--color-olive);
+        }
+
+        .bg-dark-olive {
+            background-color: var(--color-dark-olive);
+        }
+
+        /* === STATS === */
+        .stats-card {
+            border-radius: 20px;
+            height: 220px;
+            width: 100%;
+            margin-bottom: 20px;
+        }
+        .bg-grey { background-color: var(--color-grey-card); }
+        .stats-text-center {
+            text-align: center;
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin: 50px 0;
+            line-height: 1.2;
+        }
+
+        /* === ARTELS === */
+        .artel-card {
+            background-color: var(--color-olive);
+            border-radius: 25px;
+            padding: 25px;
+            text-align: center;
+            color: white;
+            height: 100%;
+        }
+        .artel-card h6 {
+            font-size: 1.3rem;
+            font-weight: 800;
+            margin-top: 10px;
+            text-transform: uppercase;
+        }
+        .artel-img {
+            width: 100%;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            background-color: rgba(255,255,255,0.3);
+            height: 180px;
+            object-fit: cover;
+        }
+        .card-question {
+            background-color: var(--color-yellow);
+            color: black;
+            font-weight: 800;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.4rem;
+        }
+        .question-mark { font-size: 7rem; line-height: 1; opacity: 0.3; }
+
+        /* === СЛАЙДЕР (АЛЬБОМ) - КАК НА СКРИНЕ === */
+        .slider-wrapper {
+            position: relative;
+            max-width: 900px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+        }
+
+        /* Сам зеленый блок фото */
+        .photo-placeholder {
+            background-color: var(--color-dark-olive);
+            width: 100%;
+            height: 450px; /* Высота альбома */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: 600;
+            /* Если будешь вставлять реальные фото, добавь object-fit: cover */
+        }
+
+        .carousel-item img {
+            width: 100%;
+            height: 450px;
+            object-fit: cover;
+        }
+
+        /* Стрелки слайдера */
+        .custom-control-prev, .custom-control-next {
+            background: none;
+            border: none;
+            font-size: 5rem; /* Огромные стрелки */
+            color: #888;
+            font-family: var(--font-main);
+            font-weight: 300;
+            cursor: pointer;
+            padding: 0 20px;
+            user-select: none;
+        }
+        .custom-control-prev:hover, .custom-control-next:hover {
+            color: #555;
+        }
+
+        /* Точки (индикаторы) */
+        .custom-indicators {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+        .dot {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background-color: #6E6E6E; /* Серые точки */
+            cursor: pointer;
+            transition: 0.3s;
+        }
+        .dot.active {
+            background-color: #A4B66B; /* Активная точка - оливковая */
+            transform: scale(1.2);
+        }
+
+        /* === FAQ (ОТВЕТЫ) === */
+        .faq-item {
+            background-color: #F4F4F4;
+            border-bottom: 2px solid black;
+            padding: 30px 0;
+            font-size: 1.3rem;
+            font-weight: 600;
+        }
+        .faq-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+        }
+        .faq-answer {
+            margin-top: 20px;
+            font-size: 1.2rem;
+            color: #555;
+            font-weight: 500;
+            display: none; /* Скрыто по умолчанию */
+            padding-right: 50px;
+        }
+        .faq-answer.show {
+            display: block; /* Показываем классом */
+        }
+
+        .btn-plus {
+            background-color: var(--color-dark-olive);
+            color: white;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            border: none;
+            line-height: 1;
+            padding-bottom: 5px; /* Выравнивание плюса */
+            transition: transform 0.3s;
+        }
+        .faq-item.active .btn-plus {
+            transform: rotate(45deg); /* Превращаем плюс в крестик */
+            background-color: #A4B66B;
+        }
+
+        /* === FOOTER === */
+        footer {
+            margin-top: 120px;
+            padding: 60px 0;
+            border-top: 3px solid black;
+            font-size: 1.1rem;
+        }
+        .footer-logo {
+            height: 80px;
+            margin-bottom: 15px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- 1. HEADER -->
+    <header class="top-header">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="d-flex align-items-center gap-4">
+                <img src="{% static 'img/logo_left.png' %}" alt="Дворец Молодежи" height="60">
+                <div style="border-left: 3px solid black; height: 50px;"></div>
+                <img src="{% static 'img/logo_right.png' %}" alt="Кванториум" height="60">
+            </div>
+            <div class="d-flex gap-4">
+                <a href="#" class="header-btn">сайт</a>
+                <a href="#" class="header-btn">vk</a>
+                <a href="{% url 'login:login' %}" class="header-btn">вход</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- 2. HERO SECTION -->
+    <section class="hero-section container">
+        <h1 class="hero-title">ГЕЙМИФИКАТОР</h1>
+        <p class="hero-subtitle">образовательного процесса</p>
+
+        <a href="{% url 'login:login' %}" class="btn-big-login">ВХОД</a>
+
+        <div class="decoration-container d-none d-lg-flex">
+            <!-- Замени на реальную картинку стрелки если есть, иначе будет символ -->
+            <div class="arrow-draw" style="font-size: 6rem; color: black; transform: rotate(10deg);">⤵</div>
+            <div class="circle-text">
+                каждый большой путь начинается с одного маленького шага
+            </div>
+        </div>
+    </section>
+
+    <!-- 3. ABOUT GAME -->
+    <section class="container">
+        <h2 class="section-title">Об игре</h2>
+        <div class="row g-5">
+            <div class="col-md-4 d-flex flex-column gap-5">
+                <div class="info-card bg-olive">
+                    <span class="card-number">01</span>
+                    <h5>Регистрация:</h5>
+                    <p class="small-text">Участниками игры становятся учащиеся ДТ «Кванториум». Она осуществляется через педагогов в начале учебного года.</p>
+                </div>
+                <div class="info-card bg-dark-olive">
+                    <span class="card-number">04</span>
+                    <h5>Баллы:</h5>
+                    <p class="small-text">За участие в мероприятиях, инициативу и активность ученики получают нематериальное вознаграждение — баллы. Это валюта и рейтинг одновременно.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="info-card bg-dark-olive h-100">
+                    <span class="card-number">02</span>
+                    <h5>Магазин:</h5>
+                    <p class="small-text">Во внутриигровом магазине участники могут приобрести: косметические элементы оформления (рамки) и эксклюзивный мерч «ДТ Кванториум».</p>
+                    <br>
+                    <p class="small-text">Активные и успешные ученики получают шанс войти в ТОП-300 игроков и открыть доступ к эксклюзивному мерчу.</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 d-flex flex-column gap-5">
+                <div class="info-card bg-olive">
+                    <span class="card-number">03</span>
+                    <h5>Битва артелей:</h5>
+                    <p class="small-text">Артель — это объединение учеников по специализации. Каждый участник, зарабатывая баллы, помогает продвигать свой артель в рейтинге.</p>
+                </div>
+                <div class="info-card bg-olive">
+                    <span class="card-number">05</span>
+                    <h5>Мотивация:</h5>
+                    <p class="small-text">Борись за результат — каждый балл приближает тебя к вершине! Покажи, на что ты способен, и докажи, что твой артель — лучшая!</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 4. STATS -->
+    <section class="container mt-5 pt-5">
+        <div class="stats-text-center">
+            Кванториум Верхняя<br>Пышма в цифрах
+        </div>
+
+        <div class="row justify-content-center g-5">
+            <div class="col-md-3">
+                <div class="stats-card bg-olive" style="transform: rotate(-4deg);"></div>
+            </div>
+            <div class="col-md-3 mt-5">
+                <div class="stats-card bg-grey"></div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-dark-olive" style="transform: rotate(4deg);"></div>
+            </div>
+        </div>
+        <div class="row justify-content-center g-5 mt-2">
+            <div class="col-md-3">
+                <div class="stats-card bg-dark-olive"></div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-grey"></div>
+            </div>
+            <div class="col-md-3">
+                <div class="stats-card bg-olive"></div>
+            </div>
+        </div>
+        <div class="text-end pe-5 mt-3">
+             <span class="badge bg-dark-olive p-3 fs-5" style="transform: rotate(-3deg);">*в 2026 году</span>
+        </div>
+    </section>
+
+    <!-- 5. ARTELS -->
+    <section class="container pt-5">
+        <h2 class="section-title">Артели</h2>
+        <div class="row g-5">
+            <!-- Левый блок с текстом -->
+            <div class="col-md-3">
+                <div class="bg-dark-olive info-card">
+                    <p class="small-text">Знакомьтесь с нашими «артелями» - командами кванторианцев, носящими имена великих ученых. Теперь каждая команда не просто соревнуется, а продолжает дело своего покровителя.</p>
+                </div>
+            </div>
+
+            <!-- Правый блок с карточками -->
+            <div class="col-md-9">
+                <div class="row g-4">
+
+                    <!-- Карточка 1: Тьюринг -->
+                    <div class="col-md-4">
+                        <div class="artel-card">
+                            <img src="{% static 'img/turing.png' %}" class="artel-img" alt="Тьюринг">
+                            <h6>артель ТЮРИНГА</h6>
+                            <small>IT, VR/AR</small>
+                        </div>
+                    </div>
+
+                    <!-- Карточка 2: Ломоносов -->
+                    <div class="col-md-4">
+                        <div class="artel-card">
+                            <img src="{% static 'img/lomonosov.png' %}" class="artel-img" alt="Ломоносов">
+                            <h6>артель ЛОМОНОСОВА</h6>
+                            <small>Нано, Гео</small>
+                        </div>
+                    </div>
+
+                    <!-- Карточка 3: Леонардо -->
+                    <div class="col-md-4">
+                        <div class="artel-card">
+                            <img src="{% static 'img/leonardo.png' %}" class="artel-img" alt="Леонардо">
+                            <h6>артель ЛЕОНАРДО</h6>
+                            <small>Хайтек</small>
+                        </div>
+                    </div>
+
+                    <!-- Карточка 4: Архимед -->
+                    <div class="col-md-4">
+                        <div class="artel-card">
+                            <img src="{% static 'img/arhimed.png' %}" class="artel-img" alt="Архимед">
+                            <h6>артель АРХИМЕДА</h6>
+                            <small>ПД, ХТ, Робо</small>
+                        </div>
+                    </div>
+
+                    <!-- Карточка 5: Ньютон -->
+                    <div class="col-md-4">
+                        <div class="artel-card">
+                            <img src="{% static 'img/neuton.png' %}" class="artel-img" alt="Ньютон">
+                            <h6>артель НЬЮТОНА</h6>
+                            <small>Аэро, Авто, Энерджи</small>
+                        </div>
+                    </div>
+
+                    <!-- Карточка 6: Вопрос -->
+                    <div class="col-md-4">
+                        <div class="artel-card card-question">
+                            <span class="question-mark">?</span>
+                            <p>КТО ЖЕ БУДЕТ<br>ПОБЕДИТЕЛЕМ</p>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 6. GALLERY (АЛЬБОМ / СЛАЙДЕР) -->
+    <section class="container text-center pt-5">
+        <h2 class="section-title">Наша жизнь</h2>
+
+        <!-- Оболочка слайдера -->
+        <div class="slider-wrapper">
+            <!-- Кнопка Назад -->
+            <button class="custom-control-prev" type="button" data-bs-target="#photoCarousel" data-bs-slide="prev">
+                &lt;
+            </button>
+
+            <!-- Сам Bootstrap Carousel -->
+            <div id="photoCarousel" class="carousel slide" data-bs-ride="false" style="width: 100%; max-width: 800px;">
+                <div class="carousel-inner">
+                    <!-- Слайд 1 (Заглушка как на макете) -->
+                    <div class="carousel-item active">
+                        <img src="{% static 'img/slide1.jpg' %}" alt="Слайд 1">
+                    </div>
+                    <!-- Слайд 2 (Заглушка) -->
+                    <div class="carousel-item">
+                        <img src="{% static 'img/slide2.jpg' %}" alt="Слайд 1">
+                    </div>
+                     <!-- Слайд 3 (Заглушка) -->
+                     <div class="carousel-item">
+                        <img src="{% static 'img/slide3.jpg' %}" alt="Слайд 1">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Кнопка Вперед -->
+            <button class="custom-control-next" type="button" data-bs-target="#photoCarousel" data-bs-slide="next">
+                &gt;
+            </button>
+        </div>
+
+        <!-- Точки снизу -->
+        <div class="custom-indicators" id="carousel-dots">
+            <div class="dot active" data-bs-target="#photoCarousel" data-bs-slide-to="0"></div>
+            <div class="dot" data-bs-target="#photoCarousel" data-bs-slide-to="1"></div>
+            <div class="dot" data-bs-target="#photoCarousel" data-bs-slide-to="2"></div>
+        </div>
+    </section>
+
+    <!-- 7. FAQ (РАБОЧИЕ ВОПРОСЫ) -->
+    <section class="container my-5 pt-5">
+        <h2 class="section-title">ответы на вопросы</h2>
+        <div class="row g-5">
+            <!-- Левая колонка вопросов -->
+            <div class="col-md-6">
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <span>Что такое геймификатор и для чего он?</span>
+                        <button class="btn-plus">+</button>
+                    </div>
+                    <div class="faq-answer">
+                        Это система, превращающая учебу в игру. Она нужна для повышения мотивации и вовлеченности студентов.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <span>Кому будет полезен ваш сайт?</span>
+                        <button class="btn-plus">+</button>
+                    </div>
+                    <div class="faq-answer">
+                        Сайт полезен ученикам Кванториума, педагогам и родителям для отслеживания успехов.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <span>Какие основные элементы геймификации существуют?</span>
+                        <button class="btn-plus">+</button>
+                    </div>
+                    <div class="faq-answer">
+                        Очки, бейджи (достижения), таблицы лидеров (рейтинги), уровни, виртуальная валюта.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <span>Какие игровые элементы я могу использовать?</span>
+                        <button class="btn-plus">+</button>
+                    </div>
+                    <div class="faq-answer">
+                        Вы можете зарабатывать баллы, покупать рамки и мерч в магазине, соревноваться в битве артелей.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Правая колонка вопросов -->
+            <div class="col-md-6">
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <span>Нужно ли мне уметь программировать?</span>
+                        <button class="btn-plus">+</button>
+                    </div>
+                    <div class="faq-answer">
+                        Нет, система интуитивно понятна. Программировать нужно только если вы учитесь в IT-квантуме!
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <span>Какие основные игровые элементы используются?</span>
+                        <button class="btn-plus">+</button>
+                    </div>
+                    <div class="faq-answer">
+                        Рейтинги, магазин наград, достижения, профили персонажей.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <span>Как геймификация использует мотивацию?</span>
+                        <button class="btn-plus">+</button>
+                    </div>
+                    <div class="faq-answer">
+                        Через мгновенную обратную связь, визуализацию прогресса и социальное соревнование.
+                    </div>
+                </div>
+
+                <div class="faq-item">
+                    <div class="faq-header">
+                        <span>Какая разница между геймификацией и игрой?</span>
+                        <button class="btn-plus">+</button>
+                    </div>
+                    <div class="faq-answer">
+                        Игра — это развлечение. Геймификация — это применение игровых механик в неигровых процессах (учебе) для достижения целей.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- 8. FOOTER -->
+    <footer>
+        <div class="container d-flex flex-wrap justify-content-between gap-5">
+            <div class="col-md-3">
+                <img src="{% static 'img/logo_left.png' %}" alt="Дворец Молодежи" class="footer-logo">
+                <div class="fw-bold fs-4">ДВОРЕЦ<br>МОЛОДЁЖИ</div>
+                <small class="text-muted">РЕГИОНАЛЬНЫЙ ОПЕРАТОР</small>
+            </div>
+
+            <div class="col-md-4">
+                <strong class="fs-4">КТО МЫ</strong><br><br>
+                Детский технопарк «Кванториум» — это уникальная среда для ускоренного развития ребенка по актуальным научно-исследовательским и инженерно-техническим направлениям.
+            </div>
+
+            <div class="col-md-3">
+                <strong class="fs-4">Контактная информация</strong><br><br>
+                <ul class="list-unstyled">
+                    <li class="mb-2">Дворец технического творчества,<br>г.Верхняя Пышма, Успенский проспект, 2Г</li>
+                    <li class="mb-2">+7 (34336) 398 40</li>
+                    <li>kvpysma@gmail.com</li>
+                </ul>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JS для Bootstrap и FAQ -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Логика для FAQ (Аккордеон)
+        document.querySelectorAll('.faq-header').forEach(header => {
+            header.addEventListener('click', () => {
+                const parent = header.parentElement;
+                const answer = parent.querySelector('.faq-answer');
+
+                // Переключаем класс active у родителя (для поворота плюса)
+                parent.classList.toggle('active');
+                // Переключаем видимость ответа
+                answer.classList.toggle('show');
+            });
+        });
+
+        // Логика для синхронизации точек слайдера с Bootstrap Carousel
+        const myCarousel = document.getElementById('photoCarousel');
+        const dots = document.querySelectorAll('.dot');
+
+        myCarousel.addEventListener('slide.bs.carousel', event => {
+            // Удаляем active у всех точек
+            dots.forEach(dot => dot.classList.remove('active'));
+            // Добавляем active нужной точке
+            dots[event.to].classList.add('active');
+        });
+    </script>
+</body>
+</html>

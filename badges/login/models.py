@@ -15,7 +15,7 @@ ACTIVITY_TITLES = {
 }
 
 TITLES_BY_ACTIVITY = {
-    'volunteering': 'Волонтер года',
+    'volunteering': 'Волонтёр года',
     'contests': 'Чемпион конкурсов',
     'academic': 'Золотой студент',
     'extracurricular': 'Активист школы',
@@ -28,6 +28,37 @@ ARTEL_CHOICES = [
     ("Artel 3", "Артель 3"),
     ("Artel 4", "Артель 4"),
 ]
+
+
+# --- ShopItem ---
+class ShopItem(models.Model):
+    TYPE_CHOICES = [
+        ('cosmetic', 'Косметика (Для всех)'),
+        ('merch', 'Мерч (Только для топ рейтинга)'),
+        ('frame', 'Рамка для аватара'),  # <--- НОВЫЙ ТИП
+    ]
+
+    name = models.CharField(max_length=100, verbose_name="Название товара")
+    description = models.TextField(verbose_name="Описание", blank=True)
+    price = models.PositiveIntegerField(verbose_name="Цена (в монетах)")
+    image = models.ImageField(upload_to='shop/', verbose_name="Изображение", blank=True, null=True)
+    quantity = models.PositiveIntegerField(default=10, verbose_name="Остаток на складе")
+    is_available = models.BooleanField(default=True, verbose_name="Доступен для покупки")
+
+    item_type = models.CharField(
+        max_length=10,
+        choices=TYPE_CHOICES,
+        default='cosmetic',
+        verbose_name="Тип товара"
+    )
+
+    class Meta:
+        verbose_name = "Товар"
+        verbose_name_plural = "Товары в магазине"
+
+    def __str__(self):
+        return f"[{self.get_item_type_display()}] {self.name}"
+
 
 class Group(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="Название группы (класса)")
@@ -67,42 +98,32 @@ class UserProfile(models.Model):
         verbose_name="Роль"
     )
 
-    # Поля ТОЛЬКО для учеников
-    birth_date = models.DateField(
+    # === НОВЫЕ ПОЛЯ ===
+    avatar = models.ImageField(
+        upload_to='avatars/',
         null=True,
         blank=True,
-        verbose_name="Дата рождения"
+        verbose_name="Аватарка"
     )
-    balance = models.PositiveIntegerField(
-        default=0,
-        validators=[MinValueValidator(0)],
-        verbose_name="Баланс"
-    )
-    rating_points = models.PositiveIntegerField(
-        default=0,
-        verbose_name="Рейтинговые очки"
-    )
-    group = models.ForeignKey(
-        Group,
+    active_frame = models.ForeignKey(
+        ShopItem,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='students',
-        verbose_name="Группа (класс)"
+        related_name='users_wearing',
+        limit_choices_to={'item_type': 'frame'},
+        verbose_name="Активная рамка"
     )
-    artel = models.CharField(
-        max_length=20,
-        choices=ARTEL_CHOICES,
-        blank=True,  # ← разрешает пустое значение в формах
-        null=True,  # ← разрешает NULL в базе данных
-    )
-    rank = models.CharField(
-        max_length=100,  # увеличено на случай нескольких званий
-        blank=True,
-        verbose_name="Звание"
-    )
+    # ==================
 
-    # === Очки по категориям активности ===
+    birth_date = models.DateField(null=True, blank=True, verbose_name="Дата рождения")
+    balance = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)], verbose_name="Баланс")
+    rating_points = models.PositiveIntegerField(default=0, verbose_name="Рейтинговые очки")
+    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True, related_name='students',
+                              verbose_name="Группа (класс)")
+    artel = models.CharField(max_length=20, choices=ARTEL_CHOICES, blank=True, null=True)
+    rank = models.CharField(max_length=100, blank=True, verbose_name="Звание")
+
     volunteering_points = models.PositiveIntegerField(default=0, verbose_name="Очки: Волонтёрство")
     contests_points = models.PositiveIntegerField(default=0, verbose_name="Очки: Конкурсы")
     academic_points = models.PositiveIntegerField(default=0, verbose_name="Очки: Учебная активность")
@@ -117,39 +138,18 @@ class UserProfile(models.Model):
         return f"{self.user.get_full_name() or self.user.username} ({self.get_role_display()})"
 
     def update_rank_if_needed(self):
-        """Обновляет звание: включает только те звания, по которым набрано >=100 очков."""
         if self.role != 'student':
             return
-
-        # Определяем, какие звания заслужены СЕЙЧАС
         achieved_titles = []
         for key, title in TITLES_BY_ACTIVITY.items():
             points = getattr(self, f"{key}_points", 0)
             if points >= ACTIVITY_MAX_POINTS:
                 achieved_titles.append(title)
-
-        # Объединяем в строку (или оставляем пустой)
         new_rank = ", ".join(sorted(set(achieved_titles)))
-
-        # Обновляем ТОЛЬКО если изменилось
         if new_rank != self.rank:
             self.rank = new_rank
             self.save(update_fields=['rank'])
 
-
-    def save(self, *args, **kwargs):
-        # Проверяем, существует ли уже этот профиль в базе (редактирование, а не создание)
-        if self.pk:
-            try:
-                old_profile = UserProfile.objects.get(pk=self.pk)
-                # Если новый рейтинг больше старого
-                if self.rating_points > old_profile.rating_points:
-                    diff = self.rating_points - old_profile.rating_points
-                    self.balance += diff
-            except UserProfile.DoesNotExist:
-                pass
-
-        super().save(*args, **kwargs)
 
 def achievement_icon_upload_to(instance, filename):
     safe_name = instance.name.replace(" ", "_").replace("/", "_")
@@ -160,18 +160,9 @@ class Achievement(models.Model):
     name = models.CharField(max_length=100, verbose_name="Название")
     description = models.TextField(verbose_name="Описание")
     requirements = models.TextField(verbose_name="Требования для получения")
-    icon = models.ImageField(
-        upload_to=achievement_icon_upload_to,
-        verbose_name="Иконка (PNG)",
-        help_text="Только PNG, рекомендуемый размер: 128x128"
-    )
-    created_by = models.ForeignKey(
-        User,
-        on_delete=models.SET_NULL,
-        null=True,
-        limit_choices_to={'profile__role': 'teacher'},
-        verbose_name="Создал педагог"
-    )
+    icon = models.ImageField(upload_to=achievement_icon_upload_to, verbose_name="Иконка (PNG)")
+    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
+                                   limit_choices_to={'profile__role': 'teacher'}, verbose_name="Создал педагог")
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -212,45 +203,17 @@ class DisplayedAchievement(models.Model):
         return f"{self.user.username} → {self.achievement.name} (в профиле)"
 
 
-class ShopCategory(models.Model):
-    name = models.CharField(max_length=50, verbose_name="Название категории")
-
-    class Meta:
-        verbose_name = "Категория товаров"
-        verbose_name_plural = "Категории товаров"
-
-    def __str__(self):
-        return self.name
-
-
-class ShopItem(models.Model):
-    # Добавляем связь с категорией (null=True, чтобы старые товары не сломались)
-    category = models.ForeignKey(
-        ShopCategory,
-        on_delete=models.SET_NULL,
-        null=True,
-        blank=True,
-        verbose_name="Категория",
-        related_name="items"
-    )
-    name = models.CharField(max_length=100, verbose_name="Название товара")
-    description = models.TextField(verbose_name="Описание", blank=True)
-    price = models.PositiveIntegerField(verbose_name="Цена (в монетах)")
-    image = models.ImageField(upload_to='shop/', verbose_name="Изображение", blank=True, null=True)
-    is_available = models.BooleanField(default=True, verbose_name="Доступен для покупки")
-
-    class Meta:
-        verbose_name = "Товар"
-        verbose_name_plural = "Товары в магазине"
-
-    def __str__(self):
-        return f"{self.name} ({self.price})"
-
 class Purchase(models.Model):
+    STATUS_CHOICES = [
+        ('pending', 'Ожидает выдачи'),
+        ('completed', 'Выдано'),
+    ]
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='purchases', verbose_name="Покупатель")
     item = models.ForeignKey(ShopItem, on_delete=models.SET_NULL, null=True, verbose_name="Товар")
     purchased_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата покупки")
     price_at_moment = models.PositiveIntegerField(verbose_name="Цена на момент покупки")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending', verbose_name="Статус")
 
     class Meta:
         verbose_name = "Покупка"

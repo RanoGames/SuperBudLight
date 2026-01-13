@@ -6,105 +6,99 @@
 <div class="row mb-4 align-items-center">
     <div class="col">
         <h2>🏪 Магазин наград</h2>
-        <p class="text-muted mb-0">Обменивай баллы на реальные призы!</p>
     </div>
     <div class="col-auto">
         <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
     </div>
 </div>
 
-<div class="row mb-4">
-    <div class="col-md-8">
-        <ul class="nav nav-pills">
-            <li class="nav-item">
-                <a class="nav-link {% if not active_category_id %}active{% endif %}" href="{% url 'login:shop' %}">Все</a>
-            </li>
-            {% for cat in categories %}
-            <li class="nav-item ms-1">
-                <a class="nav-link {% if active_category_id == cat.id %}active{% endif %}" href="{% url 'login:shop' %}?category={{ cat.id }}">{{ cat.name }}</a>
-            </li>
-            {% endfor %}
-        </ul>
-    </div>
-    <div class="col-md-4 text-end mt-3 mt-md-0">
-         <span class="badge bg-success fs-5 shadow-sm">Твой баланс: {{ user_balance }} 💵</span>
-    </div>
+<div class="d-flex justify-content-end mb-3">
+    <span class="badge bg-success fs-5 shadow-sm">Твой баланс: {{ user_balance }} 🪙</span>
 </div>
 
-<div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
-    {% for item in items %}
-    <div class="col">
-        <div class="card h-100 shadow-sm border-0">
-            {% if item.image %}
-                <img src="{{ item.image.url }}" class="card-img-top" alt="{{ item.name }}" style="height: 200px; object-fit: cover;">
-            {% else %}
-                <div class="bg-light text-muted d-flex align-items-center justify-content-center" style="height: 200px;">
-                    📷 Нет фото
-                </div>
-            {% endif %}
+<!-- ВКЛАДКИ -->
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <a class="nav-link {% if current_tab == 'cosmetic' %}active fw-bold{% endif %}" href="{% url 'login:shop' %}?tab=cosmetic">💄 Косметика</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if current_tab == 'frame' %}active fw-bold{% endif %}" href="{% url 'login:shop' %}?tab=frame">🖼️ Рамки</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if current_tab == 'merch' %}active fw-bold{% endif %} {% if not can_buy_merch and current_tab != 'merch' %}text-muted{% endif %}" href="{% url 'login:shop' %}?tab=merch">
+       {% if can_buy_merch %}🔥 Мерч{% else %}🔒 Мерч{% endif %}
+    </a>
+  </li>
+</ul>
 
-            <div class="card-body d-flex flex-column">
-                <div class="mb-2">
-                    {% if item.category %}
-                        <span class="badge bg-secondary opacity-75">{{ item.category.name }}</span>
-                    {% endif %}
-                </div>
-                <h5 class="card-title">{{ item.name }}</h5>
-                <p class="card-text text-muted small flex-grow-1">{{ item.description|truncatewords:15 }}</p>
+<!-- БЛОКИРОВКА МЕРЧА -->
+{% if current_tab == 'merch' and not can_buy_merch %}
+    <div class="alert alert-danger text-center py-5 shadow-sm">
+        <h3>⛔ Доступ закрыт</h3>
+        <p>Нужен Топ-100 школы или Топ-10 артели.</p>
+    </div>
+{% else %}
 
-                <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                    <span class="fs-5 fw-bold text-primary">{{ item.price }} 🪙</span>
+    <!-- СПИСОК ТОВАРОВ -->
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+        {% for item in items %}
+        <div class="col">
+            <div class="card h-100 shadow-sm border-0">
 
-                    {% if user.profile.role == 'student' %}
-                        {% if user_balance >= item.price %}
-                            <form action="{% url 'login:buy_item' item.id %}" method="post">
-                                {% csrf_token %}
-                                <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Купить {{ item.name }}?')">Купить</button>
-                            </form>
-                        {% else %}
-                            <button class="btn btn-light btn-sm text-muted border" disabled>Не хватает</button>
-                        {% endif %}
+                <!-- ПРЕВЬЮ ДЛЯ РАМОК: Показываем как она будет выглядеть -->
+                {% if item.item_type == 'frame' %}
+                     <div class="d-flex justify-content-center align-items-center bg-light" style="height: 200px; position: relative;">
+                         <!-- Фейковый аватар -->
+                         <div class="rounded-circle bg-secondary" style="width: 100px; height: 100px; position: absolute;"></div>
+                         <!-- Сама рамка -->
+                         {% if item.image %}
+                             <img src="{{ item.image.url }}" style="width: 130px; height: 130px; position: absolute; z-index: 2;">
+                         {% endif %}
+                     </div>
+                {% else %}
+                    <!-- Обычное фото для косметики и мерча -->
+                    {% if item.image %}
+                        <img src="{{ item.image.url }}" class="card-img-top" style="height: 200px; object-fit: cover;">
                     {% else %}
-                        <button class="btn btn-outline-secondary btn-sm" disabled>Только для учеников</button>
+                        <div class="bg-light d-flex align-items-center justify-content-center" style="height: 200px;">📷</div>
                     {% endif %}
+                {% endif %}
+
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title">{{ item.name }}</h5>
+                    <p class="card-text text-muted small flex-grow-1">{{ item.description|truncatewords:15 }}</p>
+
+                    {% if item.item_type != 'frame' %}
+                        <p class="text-secondary small">Осталось: {{ item.quantity }} шт.</p>
+                    {% endif %}
+
+                    <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
+                        <span class="fs-5 fw-bold text-primary">{{ item.price }} 🪙</span>
+
+                        {% if user.profile.role == 'student' %}
+                            <!-- ПРОВЕРКА ДЛЯ РАМОК: Если уже куплена, не даем купить -->
+                            {% if item.id in purchased_item_ids and item.item_type == 'frame' %}
+                                <button class="btn btn-secondary btn-sm" disabled>✅ Куплено</button>
+                            {% elif user_balance >= item.price %}
+                                <form action="{% url 'login:buy_item' item.id %}" method="post">
+                                    {% csrf_token %}
+                                    <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Купить {{ item.name }}?')">Купить</button>
+                                </form>
+                            {% else %}
+                                <button class="btn btn-light btn-sm text-muted border" disabled>Не хватает</button>
+                            {% endif %}
+                        {% else %}
+                            <button class="btn btn-outline-secondary btn-sm" disabled>Только ученики</button>
+                        {% endif %}
+                    </div>
                 </div>
             </div>
         </div>
+        {% empty %}
+        <div class="col-12"><div class="alert alert-secondary text-center">Пусто.</div></div>
+        {% endfor %}
     </div>
-    {% empty %}
-    <div class="col-12">
-        <div class="alert alert-secondary text-center">В этой категории пока пусто.</div>
-    </div>
-    {% endfor %}
-</div>
-
-{% if my_purchases %}
-<div class="card shadow-sm mt-5">
-    <div class="card-header bg-white">
-        <h5 class="mb-0">🛍️ Мои покупки</h5>
-    </div>
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th>Товар</th>
-                        <th>Дата</th>
-                        <th class="text-center">Цена</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for purchase in my_purchases %}
-                    <tr>
-                        <td>{{ purchase.item.name|default:"Товар удалён" }}</td>
-                        <td class="text-muted small">{{ purchase.purchased_at|date:"d.m.Y H:i" }}</td>
-                        <td class="text-center">{{ purchase.price_at_moment }} 💵</td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-    </div>
-</div>
 {% endif %}
+
+<!-- ... История покупок ... -->
 {% endblock %}
