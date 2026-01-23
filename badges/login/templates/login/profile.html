@@ -28,19 +28,19 @@
 
                     <!-- Контейнер для аватарки и рамки -->
                     <div class="position-relative d-inline-block mb-3" style="width: 150px; height: 150px;">
-                        <!-- 1. Аватарка (Круглая) -->
+                        <!-- 1. Аватарка (Квадратная с углами) -->
                         {% if profile.avatar %}
                             <img src="{{ profile.avatar.url }}"
-                                 class="rounded-circle border"
+                                 class="border"
                                  style="width: 120px; height: 120px; object-fit: cover; position: absolute; top: 15px; left: 15px;">
                         {% else %}
-                            <div class="rounded-circle bg-light border d-flex align-items-center justify-content-center"
+                            <div class="bg-light border d-flex align-items-center justify-content-center"
                                  style="width: 120px; height: 120px; position: absolute; top: 15px; left: 15px; font-size: 50px;">
                                 👤
                             </div>
                         {% endif %}
 
-                        <!-- 2. Рамка (Поверх аватарки, квадратная, полностью перекрывает контейнер) -->
+                        <!-- 2. Рамка (Поверх аватарки) -->
                         {% if profile.active_frame and profile.active_frame.image %}
                             <img src="{{ profile.active_frame.image.url }}"
                                  style="width: 150px; height: 150px; position: absolute; top: 0; left: 0; z-index: 10; pointer-events: none;">
@@ -125,6 +125,7 @@
                         {% endfor %}
                     </div>
 
+                    <!-- Блок достижений (именно здесь была ошибка) -->
                     {% if displayed_achievements %}
                     <h5 class="mt-4 mb-3 border-bottom pb-2">🏅 Достижения</h5>
                     <div class="d-flex flex-wrap gap-3">
@@ -138,13 +139,23 @@
                             </div>
                         {% endfor %}
                     </div>
-                    {% endif %}
+                    {% endif %} <!-- ВОТ ЭТОГО ТЕГА НЕ ХВАТАЛО -->
+
                 </div>
             </div>
 
         {% elif profile.role == 'teacher' %}
-             <!-- Оставляем как было для учителя -->
              <p>Вы вошли как учитель.</p>
+             <h6 class="mt-3">Курируемые группы:</h6>
+             {% if managed_groups %}
+                 <ul class="list-group">
+                     {% for group in managed_groups %}
+                         <li class="list-group-item">{{ group.name }}</li>
+                     {% endfor %}
+                 </ul>
+             {% else %}
+                 <p class="text-muted">Нет групп.</p>
+             {% endif %}
         {% endif %}
     </div>
 </div>

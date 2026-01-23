@@ -13,7 +13,7 @@
 </div>
 
 <div class="d-flex justify-content-end mb-3">
-    <span class="badge bg-success fs-5 shadow-sm">Твой баланс: {{ user_balance }} 🪙</span>
+    <span class="badge bg-success fs-5 shadow-sm">Твой баланс: {{ user_balance }} 💵</span>
 </div>
 
 <!-- ВКЛАДКИ -->
@@ -73,7 +73,7 @@
                     {% endif %}
 
                     <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
-                        <span class="fs-5 fw-bold text-primary">{{ item.price }} 🪙</span>
+                        <span class="fs-5 fw-bold text-primary">{{ item.price }} 💵</span>
 
                         {% if user.profile.role == 'student' %}
                             <!-- ПРОВЕРКА ДЛЯ РАМОК: Если уже куплена, не даем купить -->

@@ -1,66 +1,239 @@
+<!-- login/templates/login/home.html -->
 {% extends 'login/base.html' %}
+{% load static %}
 
-{% block title %}Главная{% endblock %}
+{% block title %}Главное меню{% endblock %}
 
 {% block content %}
-<div class="row mb-4 align-items-center">
-    <div class="col">
-        <h2>👋 Добро пожаловать, {{ user.get_full_name|default:user.username }}!</h2>
-        <p class="text-muted mb-0">
-            Ваша роль: <strong>{{ role|default:"не указана" }}</strong>
-            {% if role == 'student' %}
-             | Артель: <strong>{{ user.profile.get_artel_display|default:"—" }}</strong>
+
+<!-- Стили специфичные для этого экрана -->
+<style>
+    /* Подложка для ачивок */
+    .achievements-box {
+        background-color: var(--color-light-olive);
+        border-radius: 20px;
+        padding: 20px;
+        min-height: 180px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 10px;
+    }
+
+    .achievements-btn {
+        background-color: var(--color-light-olive);
+        border-radius: 20px;
+        width: 100%;
+        text-align: center;
+        padding: 5px;
+        color: #5F733C;
+        font-weight: 400;
+        font-size: 1.2rem;
+        display: block;
+        text-decoration: none;
+    }
+
+    /* Информация о пользователе (Центр) */
+    .user-info-text {
+        font-size: 1.8rem;
+        line-height: 1.2;
+        color: #49743F;
+    }
+    .user-age {
+        font-size: 1.5rem;
+        color: #6E6E6E;
+        margin-top: 10px;
+    }
+    .birth-date {
+        font-size: 1rem;
+        color: #888;
+        margin-left: 10px;
+        text-decoration: underline;
+    }
+
+    /* Аватарка (Справа) */
+    .avatar-container {
+        position: relative;
+        width: 220px;
+        height: 220px;
+        margin: 0 auto;
+    }
+    /* Сама фотка */
+    .avatar-img {
+        width: 160px;
+        height: 160px;
+        /* ИЗМЕНЕНИЕ: Было 50%, стало 15px для квадрата с углами */
+        object-fit: cover;
+        position: absolute;
+        top: 30px;
+        left: 30px;
+        z-index: 1;
+    }
+    /* Рамка */
+    .frame-img {
+        width: 220px;
+        height: 220px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 2;
+        pointer-events: none;
+    }
+    /* Иконка артели */
+    .artel-badge {
+        width: 70px;
+        height: 70px;
+        border-radius: 50%; /* Кружок артели оставляем круглым */
+        border: 4px solid #8C7853;
+        background-color: #DDE6B6;
+        position: absolute;
+        bottom: 10px;
+        left: -10px;
+        z-index: 3;
+        overflow: hidden;
+    }
+    .artel-badge img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    .rank-text {
+        text-align: center;
+        color: #A4B66B;
+        font-size: 1.5rem;
+        margin-top: 10px;
+    }
+
+    /* Нижние кнопки меню */
+    .nav-btn {
+        background-color: var(--color-light-olive);
+        color: #5F733C;
+        border-radius: 15px;
+        padding: 15px 0;
+        font-size: 1.4rem;
+        text-align: center;
+        text-decoration: none;
+        transition: transform 0.2s;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        height: 100%;
+        width: 100%;
+    }
+    .nav-btn:hover {
+        transform: scale(1.03);
+        background-color: #cfd99a;
+        color: #49743F;
+    }
+</style>
+
+{% if role == 'student' %}
+<div class="row align-items-start mt-4">
+
+    <!-- 1. ЛЕВАЯ ЧАСТЬ: Ачивки -->
+    <div class="col-lg-5 mb-4">
+        <div class="achievements-box shadow-sm">
+            {% if displayed_achievements %}
+                {% for disp in displayed_achievements %}
+                    {% if disp.achievement.icon %}
+                        <img src="{{ disp.achievement.icon.url }}"
+                             alt="{{ disp.achievement.name }}"
+                             title="{{ disp.achievement.name }}"
+                             style="width: 70px; height: 70px; object-fit: contain; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));">
+                    {% else %}
+                        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
+                             style="width: 60px; height: 60px; font-size: 1.2rem;">
+                            {{ disp.achievement.name|slice:":1" }}
+                        </div>
+                    {% endif %}
+                {% endfor %}
+            {% else %}
+                <span class="text-muted text-center w-100">Нет выбранных ачивок</span>
             {% endif %}
-        </p>
-    </div>
-    {% if role == 'student' %}
-    <div class="col-auto">
-        <div class="card bg-success text-white shadow-sm">
-            <div class="card-body py-2 px-4">
-                <span class="small opacity-75">Баланс</span>
-                <div class="fs-4 fw-bold">{{ user.profile.balance }} 💵</div>
-            </div>
         </div>
+        <a href="{% url 'login:achievements_catalog' %}" class="achievements-btn">Ачивки</a>
     </div>
-    {% endif %}
-</div>
 
-<div class="row g-4">
-    <!-- Основное меню -->
-    <div class="col-md-{% if role == 'teacher' %}6{% else %}12{% endif %}">
-        <div class="card shadow-sm h-100">
-            <div class="card-header bg-white">
-                <h5 class="mb-0">🚀 Навигация</h5>
-            </div>
-            <div class="card-body d-flex flex-wrap gap-2">
-                <a href="{% url 'login:profile' %}" class="btn btn-info text-white">👤 Мой профиль</a>
-                <a href="{% url 'login:shop' %}" class="btn btn-primary">🏪 Магазин</a>
-                <a href="{% url 'login:achievements_catalog' %}" class="btn btn-outline-success">🏅 Достижения</a>
-                <hr class="w-100 my-1 border-0">
-                <a href="{% url 'login:rating' %}" class="btn btn-danger">📈 Рейтинг учеников</a>
-                <a href="{% url 'login:artel_rating' %}" class="btn btn-secondary">🏰 Рейтинг артелей</a>
-                <a href="{% url 'login:my_artel_rating' %}" class="btn btn-warning">🏆 Рейтинг моей артели</a>
-            </div>
+    <!-- 2. ЦЕНТР: Информация -->
+    <div class="col-lg-3 mb-4 ps-lg-5">
+        <div class="user-info-text">
+            {% with name_parts=user.last_name|add:" "|add:user.first_name %}
+                <div>{{ user.last_name|default:"Фамилия" }}</div>
+                <div>{{ user.first_name|default:"Имя" }}</div>
+            {% endwith %}
+        </div>
+
+        <div class="user-age">
+            {{ age|default:"0" }} лет
+            <span class="birth-date">{{ profile.birth_date|date:"d.m.Y"|default:"" }}</span>
         </div>
     </div>
 
-    <!-- Меню учителя -->
-    {% if role == 'teacher' %}
-    <div class="col-md-6">
-        <div class="card shadow-sm h-100 border-primary">
-            <div class="card-header bg-primary text-white">
-                <h5 class="mb-0">🎓 Панель учителя</h5>
+    <!-- 3. ПРАВАЯ ЧАСТЬ: Аватарка (Квадратная) -->
+    <div class="col-lg-4 mb-4 text-center">
+        <div class="avatar-container">
+            <!-- Иконка Артели -->
+            <div class="artel-badge" title="{{ profile.get_artel_display }}">
+                {% if artel_image %}
+                    <img src="{% static 'img/'|add:artel_image %}">
+                {% endif %}
             </div>
-            <div class="card-body d-flex flex-wrap gap-2">
-                <a href="{% url 'login:teacher_students' %}" class="btn btn-primary">👥 Мои ученики</a>
-                <a href="{% url 'login:award_points' %}" class="btn btn-success">➕ Начислить очки</a>
-                <a href="{% url 'login:my_artel_rating' %}" class="btn btn-dark">👀 Рейтинг моей Артели</a>
-                <hr class="w-100 my-1 border-0">
-                <a href="{% url 'login:manage_achievements' %}" class="btn btn-warning">✏️ Управление ачивками</a>
-                <a href="{% url 'login:assign_achievement' %}" class="btn btn-info text-white">🎯 Назначить ачивку</a>
-            </div>
+
+            <!-- Рамка -->
+            {% if profile.active_frame and profile.active_frame.image %}
+                <img src="{{ profile.active_frame.image.url }}" class="frame-img">
+            {% endif %}
+
+            <!-- Фото (Квадратное) -->
+            {% if profile.avatar %}
+                <img src="{{ profile.avatar.url }}" class="avatar-img">
+            {% else %}
+                <div class="avatar-img bg-secondary d-flex align-items-center justify-content-center text-white fs-1">👤</div>
+            {% endif %}
+        </div>
+
+        <div class="rank-text">
+            {{ profile.rank|default:"Новичок" }}
         </div>
     </div>
-    {% endif %}
 </div>
+
+<!-- 4. НИЖНЕЕ МЕНЮ -->
+<div class="row g-4 mt-5 justify-content-center">
+    <div class="col-md-3 col-6">
+        <a href="{% url 'login:rating' %}" class="nav-btn">Рейтинг</a>
+    </div>
+    <div class="col-md-3 col-6">
+        <a href="{% url 'login:shop' %}" class="nav-btn">Магазин</a>
+    </div>
+    <div class="col-md-3 col-6">
+        <a href="{% url 'login:artel_rating' %}" class="nav-btn">Битва Артелей</a>
+    </div>
+    <div class="col-md-3 col-6">
+        <a href="{% url 'login:achievements_catalog' %}" class="nav-btn">Ачивки</a>
+    </div>
+</div>
+
+<div class="row g-4 mt-2 justify-content-center">
+     <div class="col-md-4 col-12">
+        <a href="{% url 'login:profile' %}" class="nav-btn bg-white border border-success text-success">Профиль</a>
+    </div>
+</div>
+
+{% elif role == 'teacher' %}
+    <div class="alert alert-success text-center">
+        <h3>Панель Педагога</h3>
+    </div>
+    <div class="row g-3">
+        <div class="col-md-4"><a href="{% url 'login:teacher_students' %}" class="nav-btn">Мои ученики</a></div>
+        <div class="col-md-4"><a href="{% url 'login:award_points' %}" class="nav-btn">Начислить очки</a></div>
+        <div class="col-md-4"><a href="{% url 'login:manage_achievements' %}" class="nav-btn">Создать ачивку</a></div>
+        <!-- КНОПКА ДЛЯ ВЫДАЧИ АЧИВОК -->
+        <div class="col-md-4"><a href="{% url 'login:assign_achievement' %}" class="nav-btn bg-warning text-dark">Назначить ачивку</a></div>
+    </div>
+{% endif %}
+
 {% endblock %}

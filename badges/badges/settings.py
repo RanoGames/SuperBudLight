@@ -130,3 +130,11 @@ MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
 
 LOGOUT_REDIRECT_URL = '/'
+
+LOGIN_URL = '/login/'
+
+# Куда перенаправлять после успешного входа
+LOGIN_REDIRECT_URL = '/home/'
+
+# Куда перенаправлять после выхода (на лендинг)
+LOGOUT_REDIRECT_URL = '/'

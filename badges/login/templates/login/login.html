@@ -6,12 +6,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Вход в аккаунт</title>
-    <!-- Подключаем шрифт, похожий на макет (Jura) -->
     <link href="https://fonts.googleapis.com/css2?family=Jura:wght@400;600&family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
     <style>
-        /* === ОСНОВНЫЕ СТИЛИ === */
         body {
-            background-color: #F4F4F4; /* Светло-серый фон как на картинке */
+            background-color: #F4F4F4;
             margin: 0;
             padding: 0;
             height: 100vh;
@@ -19,39 +17,55 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-family: 'Jura', sans-serif; /* Шрифт заголовка */
+            font-family: 'Jura', sans-serif;
             position: relative;
         }
 
-        /* === ВЕРХНЯЯ ПОЛОСКА С ЛОГОТИПАМИ === */
+        /* === ОБНОВЛЕННАЯ ШАПКА (Синхронизирована с лендингом) === */
         .top-bar {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
-            height: 80px; /* Высота полоски */
+            /* Убрали фиксированную высоту height: 80px */
+            /* Добавили отступы как на лендинге */
+            padding: 20px 40px;
+            background-color: #E0E0E0;
+            border-bottom: 2px solid #ccc; /* Чуть жирнее линия */
+
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 40px; /* Отступы по бокам */
             box-sizing: border-box;
         }
 
         .logo-img {
-            height: 50px; /* Размер логотипов */
+            height: 60px; /* Было 50, стало 60 как на лендинге */
             width: auto;
             object-fit: contain;
         }
 
-        /* === КОНТЕЙНЕР ФОРМЫ === */
+        .logo-divider {
+            border-left: 3px solid #333; /* Полоска как на лендинге */
+            height: 50px;
+            margin: 0 20px;
+        }
+
+        .left-logos {
+            display: flex;
+            align-items: center;
+        }
+
+        /* === ОСТАЛЬНОЙ ДИЗАЙН === */
         .login-container {
             text-align: center;
             width: 100%;
             max-width: 400px;
             padding: 20px;
+            /* Отступ сверху, чтобы не наезжало на шапку на маленьких экранах */
+            margin-top: 100px;
         }
 
-        /* === ЗАГОЛОВОК === */
         h1 {
             font-size: 32px;
             font-weight: 400;
@@ -61,31 +75,27 @@
             letter-spacing: 2px;
         }
 
-        /* === ЗЕЛЕНЫЙ КРУГ === */
         .green-circle {
             width: 120px;
             height: 120px;
-            background-color: #49743F; /* Цвет круга с пипетки */
+            background-color: #49743F;
             border-radius: 50%;
-            margin: 0 auto 50px auto; /* Отступы */
+            margin: 0 auto 50px auto;
         }
 
-        /* === ПОЛЯ ВВОДА (Стилизация под макет) === */
-        .form-group {
-            margin-bottom: 15px;
-        }
+        .form-group { margin-bottom: 15px; }
 
         .custom-input {
             width: 100%;
             padding: 12px;
-            background-color: transparent; /* Прозрачный фон */
-            border: 1px solid #8C9C70; /* Цвет рамки с пипетки */
-            font-family: 'Montserrat', sans-serif; /* Шрифт текста внутри */
+            background-color: transparent;
+            border: 1px solid #8C9C70;
+            font-family: 'Montserrat', sans-serif;
             font-size: 16px;
             color: #555;
-            text-align: center; /* Текст по центру как на макете */
+            text-align: center;
             outline: none;
-            box-sizing: border-box; /* Чтобы padding не ломал ширину */
+            box-sizing: border-box;
             transition: 0.3s;
         }
 
@@ -94,13 +104,6 @@
             box-shadow: 0 0 5px rgba(73, 116, 63, 0.2);
         }
 
-        .custom-input::placeholder {
-            color: #888;
-            font-weight: 300;
-        }
-
-        /* === КНОПКА (Её нет на макете, но она нужна) === */
-        /* Сделаем её в том же стиле, что и инпуты, чтобы не портить дизайн */
         .btn-submit {
             width: 100%;
             padding: 12px;
@@ -115,86 +118,46 @@
             opacity: 0.9;
         }
 
-        .btn-submit:hover {
-            opacity: 1;
-            transform: scale(1.02);
-        }
-
-        /* Ошибки (если пароль неверный) */
-        .error-list {
-            color: #dc3545;
-            list-style: none;
-            padding: 0;
-            margin-bottom: 20px;
-            font-family: 'Montserrat', sans-serif;
-            font-size: 14px;
-        }
-        .top-bar {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 80px; /* Высота полоски */
-            border-bottom: 1px solid #ccc;
-
-            /* --- ВОТ ЧТО МЫ ДОБАВИЛИ --- */
-            background-color: #E0E0E0; /* <-- Серый цвет полоски (поменяй на свой код цвета) */
-            /* --------------------------- */
-
-            display: flex;
-            justify-content: space-between; /* Логотипы по краям */
-            align-items: center;
-            padding: 0 40px; /* Отступы внутри полоски */
-            box-sizing: border-box;
-        }
+        .btn-submit:hover { opacity: 1; transform: scale(1.02); }
+        .error-list { color: #dc3545; list-style: none; padding: 0; margin-bottom: 20px; font-family: 'Montserrat', sans-serif; font-size: 14px; }
     </style>
 </head>
 <body>
 
-    <!-- Верхняя полоска с логотипами -->
+    <!-- Шапка -->
+    <!-- Шапка -->
     <div class="top-bar">
-        <!-- Замени src на пути к твоим логотипам -->
-        <!-- Логотип СЛЕВА -->
-        <img src="{% static 'img/logo_left.png' %}" alt="Logo Left" class="logo-img">
+        <div class="left-logos">
+            <a href="{% url 'login:home' %}">
+                <img src="{% static 'img/logo_left.png' %}" alt="Logo Left" class="logo-img">
+            </a>
 
-        <!-- Логотип СПРАВА -->
-        <img src="{% static 'img/logo_right.png' %}" alt="Logo Right" class="logo-img">
+            <div class="logo-divider"></div>
+
+            <a href="{% url 'login:home' %}">
+                <img src="{% static 'img/logo_right.png' %}" alt="Logo Right" class="logo-img">
+            </a>
+        </div>
+        <!-- Справа пусто -->
     </div>
 
     <div class="login-container">
-        <!-- Заголовок -->
         <h1>Вход в аккаунт</h1>
-
-        <!-- Зеленый круг -->
         <div class="green-circle"></div>
 
-        <!-- Вывод ошибок Django (если есть) -->
         {% if form.errors %}
             <ul class="error-list">
                 {% for field in form %}
-                    {% for error in field.errors %}
-                        <li>{{ error }}</li>
-                    {% endfor %}
+                    {% for error in field.errors %}<li>{{ error }}</li>{% endfor %}
                 {% endfor %}
-                {% for error in form.non_field_errors %}
-                    <li>{{ error }}</li>
-                {% endfor %}
+                {% for error in form.non_field_errors %}<li>{{ error }}</li>{% endfor %}
             </ul>
         {% endif %}
 
-        <!-- Форма -->
         <form method="post">
             {% csrf_token %}
-
-            <div class="form-group">
-                {{ form.username }}
-            </div>
-
-            <div class="form-group">
-                {{ form.password }}
-            </div>
-
-            <!-- Кнопка входа -->
+            <div class="form-group">{{ form.username }}</div>
+            <div class="form-group">{{ form.password }}</div>
             <button type="submit" class="btn-submit">Войти</button>
         </form>
     </div>
