@@ -29,10 +29,10 @@
             font-weight: 600;
         }
 
-        /* === ИСПРАВЛЕННАЯ ШАПКА (КАК НА ЛЕНДИНГЕ) === */
+
         .top-header {
             background-color: #E0E0E0;
-            padding: 20px 0; /* Было 15, стало 20 как на лендинге */
+            padding: 20px 0;
             border-bottom: 1px solid #ccc;
             margin-bottom: 40px;
         }
@@ -46,7 +46,7 @@
         .btn-logout {
             background-color: #D9D9D9;
             border: none;
-            padding: 10px 30px; /* Кнопка стала чуть больше */
+            padding: 10px 30px;
             border-radius: 8px;
             font-weight: 700;
             color: #333;
@@ -63,20 +63,20 @@
 </head>
 <body class="d-flex flex-column min-vh-100">
 
-    <!-- Шапка -->
+
     <header class="top-header">
         <div class="container d-flex justify-content-between align-items-center">
-            <!-- Логотипы слева -->
+
             <div class="d-flex align-items-center gap-4">
-                <!-- Левый логотип - ссылка -->
+
                 <a href="{% url 'login:home' %}">
                     <img src="{% static 'img/logo_left.png' %}" alt="Logo" height="60">
                 </a>
 
-                <!-- Разделитель -->
+
                 <div style="border-left: 3px solid #333; height: 50px;"></div>
 
-                <!-- Правый логотип - ссылка (ТЕПЕРЬ ТОЖЕ КЛИКАБЕЛЬНЫЙ) -->
+
                 <a href="{% url 'login:home' %}">
                     <img src="{% static 'img/logo_right.png' %}" alt="Kvantorium" height="60">
                 </a>
