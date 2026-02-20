@@ -175,14 +175,7 @@
     <!-- 3. ПРАВАЯ ЧАСТЬ: Аватарка (Квадратная) -->
     <div class="col-lg-4 mb-4 text-center">
         <div class="avatar-container">
-            <!-- Иконка Артели -->
-            <div class="artel-badge" title="{{ profile.get_artel_display }}">
-                {% if artel_image %}
-                    <img src="{% static 'img/'|add:artel_image %}">
-                {% endif %}
-            </div>
-
-            <!-- Рамка -->
+            <!-- Рамка (Теперь она главная) -->
             {% if profile.active_frame and profile.active_frame.image %}
                 <img src="{{ profile.active_frame.image.url }}" class="frame-img">
             {% endif %}

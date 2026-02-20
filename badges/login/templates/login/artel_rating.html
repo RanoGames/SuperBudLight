@@ -1,58 +1,152 @@
 {% extends 'login/base.html' %}
+{% load static %}
 
 {% block title %}Рейтинг артелей{% endblock %}
 
 {% block content %}
+
+<!-- Стили специально для этой страницы -->
+<style>
+    .artel-container {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 20px;
+        margin-top: 30px;
+    }
+
+    /* Карточка-баннер */
+    .artel-banner {
+        background-color: #DDE6B6; /* Светло-оливковый цвет как на макете */
+        width: 200px; /* Фиксированная ширина как на макете */
+        min-height: 400px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+        padding: 30px 15px;
+        text-align: center;
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        position: relative;
+    }
+
+    /* Эффект наведения */
+    .artel-banner:hover {
+        transform: translateY(-10px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        z-index: 10;
+    }
+
+    /* Название Артели */
+    .artel-title {
+        color: #5F733C; /* Темно-зеленый текст */
+        font-family: 'Jura', sans-serif; /* Шрифт как на лого */
+        text-transform: uppercase;
+        font-size: 1.4rem;
+        line-height: 1.2;
+        font-weight: 600;
+        margin-bottom: 20px;
+    }
+
+    .artel-title span {
+        display: block;
+        font-size: 1.1rem;
+        font-weight: 400;
+    }
+
+    /* Картинка ученого */
+    .artel-portrait {
+        width: 100%;
+        max-width: 160px;
+        height: auto;
+        object-fit: contain;
+        margin-top: auto; /* Прижимает картинку к низу контентной части */
+        filter: drop-shadow(0 5px 5px rgba(0,0,0,0.1));
+    }
+
+    /* Баллы внизу */
+    .artel-score {
+        margin-top: 20px;
+        color: #5F733C;
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.5rem;
+        font-weight: 600;
+    }
+
+    /* Медали за 1-3 место (опционально, если нужно выделить лидера) */
+    .rank-badge {
+        position: absolute;
+        top: -10px;
+        right: -10px;
+        width: 40px;
+        height: 40px;
+        background: white;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+</style>
+
 <div class="row mb-4 align-items-center">
     <div class="col">
         <h2>🏰 Рейтинг артелей</h2>
-        <p class="text-muted mb-0">Сортировка по сумме очков всех участников.</p>
+        <p class="text-muted mb-0">Кто победит в битве умов?</p>
     </div>
     <div class="col-auto">
         <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
     </div>
 </div>
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
-        <div class="table-responsive">
-            <table class="table table-hover mb-0 align-middle">
-                <thead class="table-light">
-                    <tr>
-                        <th scope="col" class="text-center" style="width: 80px;">#</th>
-                        <th scope="col">Название артели</th>
-                        <th scope="col" class="text-center">Сумма очков</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    {% for item in ratings %}
-                    <tr>
-                        <td class="text-center fw-bold text-secondary fs-5">
-                            {% if forloop.counter == 1 %}🥇
-                            {% elif forloop.counter == 2 %}🥈
-                            {% elif forloop.counter == 3 %}🥉
-                            {% else %}{{ forloop.counter }}
-                            {% endif %}
-                        </td>
-                        <td>
-                            <span class="fw-bold fs-5 text-dark">{{ item.artel_name }}</span>
-                        </td>
-                        <td class="text-center">
-                            <span class="badge bg-primary fs-6 px-3 py-2 rounded-pill">
-                                {{ item.total_points|default:0 }}
-                            </span>
-                        </td>
-                    </tr>
-                    {% empty %}
-                    <tr>
-                        <td colspan="3" class="text-center py-5 text-muted">
-                            <h4 class="h6">Нет данных о рейтинге артелей.</h4>
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
+{% if ratings %}
+    <div class="artel-container">
+        {% for item in ratings %}
+            <div class="artel-banner">
+                <!-- Медалька за место (только для топ-3) -->
+                {% if forloop.counter == 1 %}
+                    <div class="rank-badge">🥇</div>
+                {% elif forloop.counter == 2 %}
+                    <div class="rank-badge">🥈</div>
+                {% elif forloop.counter == 3 %}
+                    <div class="rank-badge">🥉</div>
+                {% endif %}
+
+                <!-- Название -->
+                <div class="artel-title">
+                    АРТЕЛЬ<br>
+                    <!-- Вырезаем слово "Артель" из названия, если оно там есть, чтобы не дублировать -->
+                    <strong>{{ item.artel_name|cut:"Артель "|cut:"Artel " }}</strong>
+                </div>
+
+                <!-- Картинка (Выбираем в зависимости от технического названия artel) -->
+                {% if item.artel == "Artel 1" %}
+                    <img src="{% static 'img/turing.png' %}" alt="Тьюринг" class="artel-portrait">
+                {% elif item.artel == "Artel 2" %}
+                    <img src="{% static 'img/lomonosov.png' %}" alt="Ломоносов" class="artel-portrait">
+                {% elif item.artel == "Artel 3" %}
+                    <img src="{% static 'img/leonardo.png' %}" alt="Леонардо" class="artel-portrait">
+                {% elif item.artel == "Artel 4" %}
+                    <img src="{% static 'img/arhimed.png' %}" alt="Архимед" class="artel-portrait">
+                {% elif item.artel == "Artel 5" %}
+                    <img src="{% static 'img/neuton.png' %}" alt="Ньютон" class="artel-portrait">
+                {% else %}
+                    <!-- Заглушка, если добавится новая артель без картинки -->
+                    <div style="height: 150px; display: flex; align-items: center; justify-content: center; font-size: 3rem;">🏛️</div>
+                {% endif %}
+
+                <!-- Баллы -->
+                <div class="artel-score">
+                    {{ item.total_points|default:0 }} баллы
+                </div>
+            </div>
+        {% endfor %}
     </div>
-</div>
+{% else %}
+    <div class="alert alert-warning text-center mt-5">
+        Нет данных о рейтинге артелей.
+    </div>
+{% endif %}
+
 {% endblock %}
