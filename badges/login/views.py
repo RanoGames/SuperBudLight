@@ -40,7 +40,6 @@ def login_view(request):
 
 
 @login_required
-@login_required
 def home_view(request):
     user = request.user
     profile = getattr(user, 'profile', None)
@@ -51,30 +50,17 @@ def home_view(request):
     }
 
     if profile and profile.role == 'student':
-        # 1. Получаем ачивки для отображения (те, что выбрал ученик)
+        # 1. Ачивки
         displayed = DisplayedAchievement.objects.filter(user=user).select_related('achievement')
         context['displayed_achievements'] = displayed
 
-        # 2. Вычисляем возраст
+        # 2. Возраст
         age = None
         if profile.birth_date:
             today = date.today()
-            # Магия вычисления возраста
             age = today.year - profile.birth_date.year - (
                         (today.month, today.day) < (profile.birth_date.month, profile.birth_date.day))
         context['age'] = age
-
-        # 3. Картинка артели (для кружочка на аватаре)
-        # Сопоставляем название артели с файлом картинки
-        artel_images = {
-            "Artel 1": "turing.png",  # Тюринг
-            "Artel 2": "lomonosov.png",  # Ломоносов
-            "Artel 3": "leonardo.png",  # Леонардо
-            "Artel 4": "arhimed.png",  # Архимед
-            "Artel 5": "neuton.png",  # Ньютон (если есть)
-        }
-        # profile.artel хранит значение choice (например "Artel 1")
-        context['artel_image'] = artel_images.get(profile.artel, "logo_right.png")  # Заглушка если нет артели
 
     return render(request, 'login/home.html', context)
 

@@ -27,25 +27,26 @@
                 <div class="col-md-4 text-center border-end">
 
                     <!-- Контейнер для аватарки и рамки -->
-                    <div class="position-relative d-inline-block mb-3" style="width: 150px; height: 150px;">
-                        <!-- 1. Аватарка (Квадратная с углами) -->
-                        {% if profile.avatar %}
-                            <img src="{{ profile.avatar.url }}"
-                                 class="border"
-                                 style="width: 120px; height: 120px; object-fit: cover; position: absolute; top: 15px; left: 15px;">
-                        {% else %}
-                            <div class="bg-light border d-flex align-items-center justify-content-center"
-                                 style="width: 120px; height: 120px; position: absolute; top: 15px; left: 15px; font-size: 50px;">
-                                👤
-                            </div>
-                        {% endif %}
+                <div class="position-relative d-inline-block mb-3" style="width: 160px; height: 160px;">
 
-                        <!-- 2. Рамка (Поверх аватарки) -->
-                        {% if profile.active_frame and profile.active_frame.image %}
-                            <img src="{{ profile.active_frame.image.url }}"
-                                 style="width: 150px; height: 150px; position: absolute; top: 0; left: 0; z-index: 10; pointer-events: none;">
-                        {% endif %}
-                    </div>
+                    <!-- 1. Аватарка (Размер 120px, отступ 20px от края контейнера) -->
+                    {% if profile.avatar %}
+                        <img src="{{ profile.avatar.url }}"
+                             class="border"
+                             style="width: 120px; height: 120px; object-fit: cover; position: absolute; top: 20px; left: 20px; border-radius: 15px; z-index: 1;">
+                    {% else %}
+                        <div class="bg-light border d-flex align-items-center justify-content-center"
+                             style="width: 120px; height: 120px; position: absolute; top: 20px; left: 20px; font-size: 50px; border-radius: 15px; z-index: 1;">
+                            👤
+                        </div>
+                    {% endif %}
+
+                    <!-- 2. Рамка (Размер 160px — больше аватарки, позиция 0,0, поверх аватарки) -->
+                    {% if profile.active_frame and profile.active_frame.image %}
+                        <img src="{{ profile.active_frame.image.url }}"
+                             style="width: 160px; height: 160px; position: absolute; top: 0; left: 0; z-index: 10; pointer-events: none;">
+                    {% endif %}
+                </div>
 
                     <!-- Форма загрузки -->
                     <button class="btn btn-sm btn-outline-primary mt-2" type="button" data-bs-toggle="collapse" data-bs-target="#avatarUpload">
