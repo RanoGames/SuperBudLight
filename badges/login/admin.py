@@ -1,4 +1,3 @@
-# login/admin.py
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.contrib.auth.models import User
@@ -29,8 +28,6 @@ class GroupAdmin(admin.ModelAdmin):
     list_display = ('name', 'teacher')
     list_filter = ('teacher',)
     search_fields = ('name',)
-
-# === НОВЫЙ КОД ДЛЯ МАГАЗИНА ===
 @admin.register(ShopItem)
 class ShopItemAdmin(admin.ModelAdmin):
     list_display = ('name', 'item_type', 'price', 'quantity', 'is_available')

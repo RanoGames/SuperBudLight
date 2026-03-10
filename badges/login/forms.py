@@ -1,4 +1,3 @@
-# login/forms.py
 from django import forms
 from django.contrib.auth.forms import AuthenticationForm
 from .models import UserProfile, Group, Achievement, ShopItem
@@ -16,8 +15,6 @@ class CustomLoginForm(AuthenticationForm):
             'placeholder': 'Пароль'
         })
     )
-
-# === НОВАЯ ФОРМА ДЛЯ АВАТАРКИ ===
 class AvatarUploadForm(forms.ModelForm):
     class Meta:
         model = UserProfile
