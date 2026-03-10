@@ -1,9 +1,13 @@
-
+# models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
-from django.db.models.signals import post_save, pre_save
+from django.db.models.signals import pre_save
 from django.dispatch import receiver
+
+# ─────────────────────────────────────────
+# CONSTANTS
+# ─────────────────────────────────────────
 
 ACTIVITY_MAX_POINTS = 100
 
@@ -41,11 +45,83 @@ ARTEL_FRAME_MAP = {
 
 DEFAULT_FRAME_NAME = "Стандартная рамка"
 
+
+# ─────────────────────────────────────────
+# RBAC: Permission → Role → User
+# ─────────────────────────────────────────
+
+class Permission(models.Model):
+    """
+    Атомарное право доступа.
+    Примеры: 'can_award_points', 'can_create_achievement', 'can_manage_shop'
+    """
+    codename = models.CharField(
+        max_length=100,
+        unique=True,
+        verbose_name="Кодовое имя",
+        help_text="Например: can_award_points"
+    )
+    name = models.CharField(max_length=200, verbose_name="Читаемое название")
+    description = models.TextField(blank=True, verbose_name="Описание")
+
+    class Meta:
+        verbose_name = "Право доступа"
+        verbose_name_plural = "Права доступа"
+        ordering = ['codename']
+
+    def __str__(self):
+        return f"{self.name} ({self.codename})"
+
+
+class Role(models.Model):
+    """
+    Роль — именованный набор прав.
+    Базовые роли: 'student', 'teacher'. Можно добавлять произвольные.
+    """
+    name = models.CharField(max_length=50, unique=True, verbose_name="Название роли")
+    display_name = models.CharField(max_length=100, verbose_name="Отображаемое название")
+    permissions = models.ManyToManyField(
+        Permission,
+        through='RolePermission',
+        blank=True,
+        related_name='roles',
+        verbose_name="Права"
+    )
+
+    class Meta:
+        verbose_name = "Роль"
+        verbose_name_plural = "Роли"
+
+    def __str__(self):
+        return self.display_name
+
+
+class RolePermission(models.Model):
+    """
+    Промежуточная таблица Role ↔ Permission.
+    Позволяет добавить мета-поля в будущем (например, granted_at, granted_by).
+    """
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, verbose_name="Роль")
+    permission = models.ForeignKey(Permission, on_delete=models.CASCADE, verbose_name="Право")
+
+    class Meta:
+        unique_together = ('role', 'permission')
+        verbose_name = "Право роли"
+        verbose_name_plural = "Права ролей"
+
+    def __str__(self):
+        return f"{self.role} → {self.permission.codename}"
+
+
+# ─────────────────────────────────────────
+# SHOP
+# ─────────────────────────────────────────
+
 class ShopItem(models.Model):
     TYPE_CHOICES = [
         ('cosmetic', 'Косметика (Для всех)'),
         ('merch', 'Мерч (Только для топ рейтинга)'),
-        ('frame', 'Рамка для аватара'),  # <--- НОВЫЙ ТИП
+        ('frame', 'Рамка для аватара'),
     ]
 
     name = models.CharField(max_length=100, verbose_name="Название товара")
@@ -54,12 +130,20 @@ class ShopItem(models.Model):
     image = models.ImageField(upload_to='shop/', verbose_name="Изображение", blank=True, null=True)
     quantity = models.PositiveIntegerField(default=10, verbose_name="Остаток на складе")
     is_available = models.BooleanField(default=True, verbose_name="Доступен для покупки")
-
     item_type = models.CharField(
         max_length=10,
         choices=TYPE_CHOICES,
         default='cosmetic',
         verbose_name="Тип товара"
+    )
+
+    # Какие роли могут купить этот товар (пусто = доступен всем)
+    allowed_roles = models.ManyToManyField(
+        Role,
+        blank=True,
+        related_name='available_items',
+        verbose_name="Доступно ролям",
+        help_text="Оставьте пустым — доступно всем"
     )
 
     class Meta:
@@ -69,16 +153,28 @@ class ShopItem(models.Model):
     def __str__(self):
         return f"[{self.get_item_type_display()}] {self.name}"
 
+    def is_accessible_by(self, user_profile: 'UserProfile') -> bool:
+        """Проверяет, может ли пользователь купить этот товар."""
+        if not self.allowed_roles.exists():
+            return True
+        return self.allowed_roles.filter(pk__in=user_profile.roles.all()).exists()
+
+
+# ─────────────────────────────────────────
+# GROUP
+# ─────────────────────────────────────────
 
 class Group(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="Название группы (класса)")
+
+    # Куратором может быть любой пользователь с ролью 'teacher' —
+    # проверяется через has_role(), а не через limit_choices_to
     teacher = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
         related_name='managed_groups',
-        limit_choices_to={'profile__role': 'teacher'},
         verbose_name="Куратор (педагог)"
     )
 
@@ -90,28 +186,28 @@ class Group(models.Model):
         return self.name
 
 
+# ─────────────────────────────────────────
+# USER PROFILE (RBAC-based)
+# ─────────────────────────────────────────
+
 class UserProfile(models.Model):
-    ROLE_CHOICES = (
-        ('student', 'Ученик'),
-        ('teacher', 'Педагог'),
-    )
     user = models.OneToOneField(
         User,
         on_delete=models.CASCADE,
         related_name='profile',
         verbose_name="Пользователь"
     )
-    role = models.CharField(
-        max_length=10,
-        choices=ROLE_CHOICES,
-        verbose_name="Роль"
-    )
-    avatar = models.ImageField(
-        upload_to='avatars/',
-        null=True,
+
+    # RBAC: M2M вместо одиночного CharField
+    roles = models.ManyToManyField(
+        Role,
+        through='UserRole',
         blank=True,
-        verbose_name="Аватарка"
+        related_name='users',
+        verbose_name="Роли"
     )
+
+    avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Аватарка")
     active_frame = models.ForeignKey(
         ShopItem,
         on_delete=models.SET_NULL,
@@ -124,7 +220,14 @@ class UserProfile(models.Model):
     birth_date = models.DateField(null=True, blank=True, verbose_name="Дата рождения")
     balance = models.PositiveIntegerField(default=0, validators=[MinValueValidator(0)], verbose_name="Баланс")
     rating_points = models.PositiveIntegerField(default=0, verbose_name="Рейтинговые очки")
-    group = models.ForeignKey(Group, on_delete=models.SET_NULL, null=True, blank=True, related_name='students', verbose_name="Группа (класс)")
+    group = models.ForeignKey(
+        Group,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='students',
+        verbose_name="Группа (класс)"
+    )
     artel = models.CharField(max_length=20, choices=ARTEL_CHOICES, blank=True, null=True)
     rank = models.CharField(max_length=100, blank=True, verbose_name="Звание")
 
@@ -139,10 +242,38 @@ class UserProfile(models.Model):
         verbose_name_plural = "Профили пользователей"
 
     def __str__(self):
-        return f"{self.user.get_full_name() or self.user.username} ({self.get_role_display()})"
+        return f"{self.user.get_full_name() or self.user.username}"
+
+    # ── RBAC helpers ──────────────────────────────────────────
+
+    def has_role(self, role_name: str) -> bool:
+        """Проверяет наличие роли по codename. Пример: profile.has_role('teacher')"""
+        return self.roles.filter(name=role_name).exists()
+
+    def has_permission(self, codename: str) -> bool:
+        """
+        Проверяет наличие права через любую из ролей пользователя.
+        Пример: profile.has_permission('can_award_points')
+        """
+        return Permission.objects.filter(
+            codename=codename,
+            roles__users=self
+        ).exists()
+
+    def get_all_permissions(self) -> models.QuerySet:
+        """Возвращает QuerySet всех прав пользователя (объединение прав всех ролей)."""
+        return Permission.objects.filter(roles__users=self).distinct()
+
+    # ── Business logic ────────────────────────────────────────
+
+    def is_student(self) -> bool:
+        return self.has_role('student')
+
+    def is_teacher(self) -> bool:
+        return self.has_role('teacher')
 
     def update_rank_if_needed(self):
-        if self.role != 'student':
+        if not self.is_student():
             return
         achieved_titles = []
         for key, title in TITLES_BY_ACTIVITY.items():
@@ -155,6 +286,36 @@ class UserProfile(models.Model):
             self.save(update_fields=['rank'])
 
 
+class UserRole(models.Model):
+    """
+    Промежуточная таблица User ↔ Role.
+    Хранит когда и кем была выдана роль.
+    """
+    profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name="Профиль")
+    role = models.ForeignKey(Role, on_delete=models.CASCADE, verbose_name="Роль")
+    granted_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата выдачи")
+    granted_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='granted_roles',
+        verbose_name="Выдал"
+    )
+
+    class Meta:
+        unique_together = ('profile', 'role')
+        verbose_name = "Роль пользователя"
+        verbose_name_plural = "Роли пользователей"
+
+    def __str__(self):
+        return f"{self.profile} → {self.role}"
+
+
+# ─────────────────────────────────────────
+# ACHIEVEMENTS
+# ─────────────────────────────────────────
+
 def achievement_icon_upload_to(instance, filename):
     safe_name = instance.name.replace(" ", "_").replace("/", "_")
     return f'achievements/icons/{safe_name}.png'
@@ -165,8 +326,12 @@ class Achievement(models.Model):
     description = models.TextField(verbose_name="Описание")
     requirements = models.TextField(verbose_name="Требования для получения")
     icon = models.ImageField(upload_to=achievement_icon_upload_to, verbose_name="Иконка (PNG)")
-    created_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
-                                   limit_choices_to={'profile__role': 'teacher'}, verbose_name="Создал педагог")
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        verbose_name="Создал"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -207,6 +372,10 @@ class DisplayedAchievement(models.Model):
         return f"{self.user.username} → {self.achievement.name} (в профиле)"
 
 
+# ─────────────────────────────────────────
+# PURCHASES
+# ─────────────────────────────────────────
+
 class Purchase(models.Model):
     STATUS_CHOICES = [
         ('pending', 'Ожидает выдачи'),
@@ -229,53 +398,31 @@ class Purchase(models.Model):
         return f"{self.user.username} купил {item_name}"
 
 
-ARTEL_FRAME_MAP = {
-    "Artel 1": "Рамка Тьюринга",
-    "Artel 2": "Рамка Ломоносова",
-    "Artel 3": "Рамка Леонардо",
-    "Artel 4": "Рамка Архимеда",
-    "Artel 5": "Рамка Ньютона",
-}
+# ─────────────────────────────────────────
+# SIGNALS (очищены от дублей)
+# ─────────────────────────────────────────
 
-
-@receiver(post_save, sender=UserProfile)
-def auto_assign_artel_frame(sender, instance, created, **kwargs):
-    if instance.role != 'student' or not instance.artel:
+@receiver(pre_save, sender=UserProfile)
+def handle_artel_change(sender, instance, **kwargs):
+    """
+    Единственный сигнал для смены артели.
+    При смене — автоматически выдаёт рамку и создаёт запись о покупке.
+    """
+    if not instance.artel:
         return
-    target_frame_name = ARTEL_FRAME_MAP.get(instance.artel)
-    if not target_frame_name:
+
+    if instance.pk:
+        try:
+            old_profile = UserProfile.objects.get(pk=instance.pk)
+            if old_profile.artel == instance.artel:
+                return  # артель не изменилась — ничего не делаем
+        except UserProfile.DoesNotExist:
+            pass
+
+    # Проверяем роль через RBAC
+    if not instance.roles.filter(name='student').exists():
         return
-    try:
-        frame_item, item_created = ShopItem.objects.get_or_create(
-            name=target_frame_name,
-            defaults={
-                'item_type': 'frame',
-                'price': 0,
-                'description': f'Эксклюзивная рамка для {instance.get_artel_display()}',
-                'is_available': False
-            }
-        )
-        if instance.active_frame != frame_item:
-            Purchase.objects.get_or_create(
-                user=instance.user,
-                item=frame_item,
-                defaults={
-                    'price_at_moment': 0,
-                    'status': 'completed'
-                }
-            )
-            UserProfile.objects.filter(pk=instance.pk).update(active_frame=frame_item)
 
-            print(f"Updated frame for {instance.user.username} to {target_frame_name}")
-
-    except Exception as e:
-        print(f"Error auto-assigning frame: {e}")
-
-
-@receiver(post_save, sender=UserProfile)
-def auto_assign_artel_frame(sender, instance, created, **kwargs):
-    if instance.role != 'student' or not instance.artel:
-        return
     target_frame_name = ARTEL_FRAME_MAP.get(instance.artel)
     if not target_frame_name:
         return
@@ -288,79 +435,16 @@ def auto_assign_artel_frame(sender, instance, created, **kwargs):
                 'price': 0,
                 'description': f'Уникальная рамка для {instance.get_artel_display()}',
                 'is_available': False,
-                'quantity': 999999
+                'quantity': 999999,
             }
         )
-        if instance.active_frame != frame_item:
+        if instance.user_id:
             Purchase.objects.get_or_create(
-                user=instance.user,
+                user_id=instance.user_id,
                 item=frame_item,
-                defaults={
-                    'price_at_moment': 0,
-                    'status': 'completed'
-                }
+                defaults={'price_at_moment': 0, 'status': 'completed'}
             )
-            UserProfile.objects.filter(pk=instance.pk).update(active_frame=frame_item)
+        instance.active_frame = frame_item
+
     except Exception as e:
         print(f"Ошибка при выдаче рамки артеля: {e}")
-
-
-@receiver(pre_save, sender=UserProfile)
-def check_artel_change_and_assign_frame(sender, instance, **kwargs):
-    if instance.role != 'student' or not instance.artel:
-        return
-    if instance.pk:
-        try:
-            old_profile = UserProfile.objects.get(pk=instance.pk)
-            if old_profile.artel == instance.artel:
-                return
-        except UserProfile.DoesNotExist:
-            pass
-    target_frame_name = ARTEL_FRAME_MAP.get(instance.artel)
-
-    if target_frame_name:
-        try:
-            frame_item, _ = ShopItem.objects.get_or_create(
-                name=target_frame_name,
-                defaults={'item_type': 'frame', 'price': 0, 'is_available': False, 'quantity': 999999}
-            )
-            if instance.user:
-                Purchase.objects.get_or_create(
-                    user=instance.user,
-                    item=frame_item,
-                    defaults={'price_at_moment': 0, 'status': 'completed'}
-                )
-            instance.active_frame = frame_item
-
-        except Exception as e:
-            print(f"Error assigning artel frame: {e}")
-
-
-@receiver(pre_save, sender=UserProfile)
-def handle_artel_change(sender, instance, **kwargs):
-    if instance.role != 'student':
-        return
-    if not instance.pk:
-        return
-
-    try:
-        old_profile = UserProfile.objects.get(pk=instance.pk)
-        if old_profile.artel != instance.artel:
-            print(f"🔄 Смена артеля у {instance.user.username}: {old_profile.artel} -> {instance.artel}")
-
-            target_frame_name = ARTEL_FRAME_MAP.get(instance.artel)
-            if target_frame_name:
-                frame_item, _ = ShopItem.objects.get_or_create(
-                    name=target_frame_name,
-                    defaults={'item_type': 'frame', 'price': 0, 'is_available': False, 'quantity': 999999}
-                )
-                if instance.user:
-                    Purchase.objects.get_or_create(
-                        user=instance.user,
-                        item=frame_item,
-                        defaults={'price_at_moment': 0, 'status': 'completed'}
-                    )
-                instance.active_frame = frame_item
-
-    except UserProfile.DoesNotExist:
-        pass
