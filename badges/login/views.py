@@ -1,4 +1,3 @@
-# login/views.py
 from django.db.models import Sum
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login
@@ -50,11 +49,8 @@ def home_view(request):
     }
 
     if profile and profile.role == 'student':
-        # 1. Ачивки
         displayed = DisplayedAchievement.objects.filter(user=user).select_related('achievement')
         context['displayed_achievements'] = displayed
-
-        # 2. Возраст
         age = None
         if profile.birth_date:
             today = date.today()
@@ -73,8 +69,6 @@ def profile_view(request):
     if not profile:
         messages.error(request, "Профиль не найден.")
         return redirect('login:home')
-
-    # Обработка загрузки аватарки
     if request.method == 'POST':
         avatar_form = AvatarUploadForm(request.POST, request.FILES, instance=profile)
         if avatar_form.is_valid():
@@ -96,15 +90,12 @@ def profile_view(request):
         context['managed_groups'] = managed_groups
 
     elif profile.role == 'student':
-        # Данные для графиков
         activity_data = []
         for key, label in ACTIVITY_TITLES.items():
             points = getattr(profile, f"{key}_points")
             percent = int((points / ACTIVITY_MAX_POINTS) * 100) if ACTIVITY_MAX_POINTS > 0 else 0
             activity_data.append((label, points, percent))
         context['activity_data'] = activity_data
-
-        # Получаем купленные рамки
         owned_frame_ids = Purchase.objects.filter(
             user=user,
             item__item_type='frame'
@@ -118,14 +109,11 @@ def profile_view(request):
 
     return render(request, 'login/profile.html', context)
 
-
-# === ЛОГИКА СМЕНЫ РАМКИ ===
 @login_required
 @require_POST
 def equip_frame_view(request):
-    """Надеть или снять рамку"""
     frame_id = request.POST.get('frame_id')
-    action = request.POST.get('action')  # 'equip' или 'unequip'
+    action = request.POST.get('action')
     profile = request.user.profile
 
     if action == 'unequip':
@@ -134,7 +122,6 @@ def equip_frame_view(request):
         messages.info(request, "Рамка снята.")
 
     elif action == 'equip' and frame_id:
-        # Проверяем, куплена ли эта рамка
         has_purchased = Purchase.objects.filter(user=request.user, item_id=frame_id).exists()
         if has_purchased:
             frame = ShopItem.objects.get(id=frame_id)
@@ -180,8 +167,6 @@ def shop_view(request):
         can_buy_merch = check_merch_access(request.user.profile)
 
     my_purchases = Purchase.objects.filter(user=request.user).select_related('item')
-
-    # Получаем ID купленных товаров, чтобы не давать покупать рамки повторно
     purchased_item_ids = my_purchases.values_list('item_id', flat=True)
 
     context = {
@@ -205,21 +190,15 @@ def buy_item_view(request, item_id):
     with transaction.atomic():
         item = get_object_or_404(ShopItem.objects.select_for_update(), id=item_id, is_available=True)
         profile = UserProfile.objects.select_for_update().get(user=request.user)
-
-        # 1. Проверка доступа к мерчу
         if item.item_type == 'merch':
             if not check_merch_access(profile):
                 messages.error(request, "Ошибка доступа! Мерч доступен только Топ-100 школы или Топ-10 артели.")
                 return redirect(f"/shop/?tab={item.item_type}")
-
-        # 2. Проверка: нельзя купить рамку дважды
         if item.item_type == 'frame':
             already_owns = Purchase.objects.filter(user=request.user, item=item).exists()
             if already_owns:
                 messages.warning(request, "У вас уже есть эта рамка!")
                 return redirect(f"/shop/?tab={item.item_type}")
-
-        # 3. Проверка наличия и баланса
         if item.quantity <= 0:
             messages.error(request, "К сожалению, этот товар закончился.")
             return redirect(f"/shop/?tab={item.item_type}")
@@ -227,13 +206,8 @@ def buy_item_view(request, item_id):
         if profile.balance >= item.price:
             profile.balance -= item.price
             profile.save(update_fields=['balance'])
-
-            # Уменьшаем кол-во только если это НЕ рамка (рамки обычно бесконечны, но если хочешь лимит - оставь)
-            # Если хочешь бесконечные рамки, добавь if item.item_type != 'frame': ...
             item.quantity -= 1
             item.save(update_fields=['quantity'])
-
-            # Рамки сразу считаем "Выданными" (completed), т.к. они цифровые
             status = 'completed' if item.item_type == 'frame' else 'pending'
 
             Purchase.objects.create(
@@ -248,13 +222,6 @@ def buy_item_view(request, item_id):
             messages.error(request, "Недостаточно средств.")
 
     return redirect(f"/shop/?tab={item.item_type}")
-
-
-# ... (Остальные views: teacher_students_view, edit_student_view, award_points_view, rating_view, artel_rating_view, my_artel_rating_view, manage_achievements_view, edit_achievement_view, delete_achievement_view, achievements_catalog_view, toggle_displayed_achievement, assign_achievement_view - ОСТАЮТСЯ БЕЗ ИЗМЕНЕНИЙ) ...
-
-# Чтобы код не был слишком длинным, я привел только измененные функции.
-# Если нужны остальные - они такие же, как в прошлом ответе.
-# НО! Нужно добавить импорты вверху файла.
 @login_required
 def teacher_students_view(request):
     if not (hasattr(request.user, 'profile') and request.user.profile.role == 'teacher'):
@@ -310,8 +277,6 @@ def award_points_view(request):
             current = getattr(student_profile, f"{activity}_points")
             new_value = min(current + points, ACTIVITY_MAX_POINTS)
             setattr(student_profile, f"{activity}_points", new_value)
-
-            # Дельта логика
             delta = new_value - current
             if delta > 0:
                 student_profile.rating_points += delta
@@ -450,8 +415,6 @@ def assign_achievement_view(request):
 
 
 def landing_view(request):
-    """Отображает главную промо-страницу (Landing Page)"""
-    # Если пользователь уже вошел, можно сразу кидать его в профиль или Home
     if request.user.is_authenticated:
         return redirect('login:home')
     return render(request, 'login/landing.html')
