@@ -1,4 +1,3 @@
-# models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
@@ -51,10 +50,6 @@ DEFAULT_FRAME_NAME = "Стандартная рамка"
 # ─────────────────────────────────────────
 
 class Permission(models.Model):
-    """
-    Атомарное право доступа.
-    Примеры: 'can_award_points', 'can_create_achievement', 'can_manage_shop'
-    """
     codename = models.CharField(
         max_length=100,
         unique=True,
@@ -74,10 +69,6 @@ class Permission(models.Model):
 
 
 class Role(models.Model):
-    """
-    Роль — именованный набор прав.
-    Базовые роли: 'student', 'teacher'. Можно добавлять произвольные.
-    """
     name = models.CharField(max_length=50, unique=True, verbose_name="Название роли")
     display_name = models.CharField(max_length=100, verbose_name="Отображаемое название")
     permissions = models.ManyToManyField(
@@ -97,10 +88,6 @@ class Role(models.Model):
 
 
 class RolePermission(models.Model):
-    """
-    Промежуточная таблица Role ↔ Permission.
-    Позволяет добавить мета-поля в будущем (например, granted_at, granted_by).
-    """
     role = models.ForeignKey(Role, on_delete=models.CASCADE, verbose_name="Роль")
     permission = models.ForeignKey(Permission, on_delete=models.CASCADE, verbose_name="Право")
 
@@ -136,8 +123,6 @@ class ShopItem(models.Model):
         default='cosmetic',
         verbose_name="Тип товара"
     )
-
-    # Какие роли могут купить этот товар (пусто = доступен всем)
     allowed_roles = models.ManyToManyField(
         Role,
         blank=True,
@@ -154,7 +139,6 @@ class ShopItem(models.Model):
         return f"[{self.get_item_type_display()}] {self.name}"
 
     def is_accessible_by(self, user_profile: 'UserProfile') -> bool:
-        """Проверяет, может ли пользователь купить этот товар."""
         if not self.allowed_roles.exists():
             return True
         return self.allowed_roles.filter(pk__in=user_profile.roles.all()).exists()
@@ -166,9 +150,6 @@ class ShopItem(models.Model):
 
 class Group(models.Model):
     name = models.CharField(max_length=50, unique=True, verbose_name="Название группы (класса)")
-
-    # Куратором может быть любой пользователь с ролью 'teacher' —
-    # проверяется через has_role(), а не через limit_choices_to
     teacher = models.ForeignKey(
         User,
         on_delete=models.SET_NULL,
@@ -187,7 +168,7 @@ class Group(models.Model):
 
 
 # ─────────────────────────────────────────
-# USER PROFILE (RBAC-based)
+# USER PROFILE
 # ─────────────────────────────────────────
 
 class UserProfile(models.Model):
@@ -197,8 +178,6 @@ class UserProfile(models.Model):
         related_name='profile',
         verbose_name="Пользователь"
     )
-
-    # RBAC: M2M вместо одиночного CharField
     roles = models.ManyToManyField(
         Role,
         through='UserRole',
@@ -206,7 +185,6 @@ class UserProfile(models.Model):
         related_name='users',
         verbose_name="Роли"
     )
-
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True, verbose_name="Аватарка")
     active_frame = models.ForeignKey(
         ShopItem,
@@ -247,21 +225,15 @@ class UserProfile(models.Model):
     # ── RBAC helpers ──────────────────────────────────────────
 
     def has_role(self, role_name: str) -> bool:
-        """Проверяет наличие роли по codename. Пример: profile.has_role('teacher')"""
         return self.roles.filter(name=role_name).exists()
 
     def has_permission(self, codename: str) -> bool:
-        """
-        Проверяет наличие права через любую из ролей пользователя.
-        Пример: profile.has_permission('can_award_points')
-        """
         return Permission.objects.filter(
             codename=codename,
             roles__users=self
         ).exists()
 
     def get_all_permissions(self) -> models.QuerySet:
-        """Возвращает QuerySet всех прав пользователя (объединение прав всех ролей)."""
         return Permission.objects.filter(roles__users=self).distinct()
 
     # ── Business logic ────────────────────────────────────────
@@ -287,10 +259,6 @@ class UserProfile(models.Model):
 
 
 class UserRole(models.Model):
-    """
-    Промежуточная таблица User ↔ Role.
-    Хранит когда и кем была выдана роль.
-    """
     profile = models.ForeignKey(UserProfile, on_delete=models.CASCADE, verbose_name="Профиль")
     role = models.ForeignKey(Role, on_delete=models.CASCADE, verbose_name="Роль")
     granted_at = models.DateTimeField(auto_now_add=True, verbose_name="Дата выдачи")
@@ -399,15 +367,11 @@ class Purchase(models.Model):
 
 
 # ─────────────────────────────────────────
-# SIGNALS (очищены от дублей)
+# SIGNALS
 # ─────────────────────────────────────────
 
 @receiver(pre_save, sender=UserProfile)
 def handle_artel_change(sender, instance, **kwargs):
-    """
-    Единственный сигнал для смены артели.
-    При смене — автоматически выдаёт рамку и создаёт запись о покупке.
-    """
     if not instance.artel:
         return
 
@@ -415,13 +379,9 @@ def handle_artel_change(sender, instance, **kwargs):
         try:
             old_profile = UserProfile.objects.get(pk=instance.pk)
             if old_profile.artel == instance.artel:
-                return  # артель не изменилась — ничего не делаем
+                return
         except UserProfile.DoesNotExist:
             pass
-
-    # Проверяем роль через RBAC
-    if not instance.roles.filter(name='student').exists():
-        return
 
     target_frame_name = ARTEL_FRAME_MAP.get(instance.artel)
     if not target_frame_name:
@@ -438,7 +398,7 @@ def handle_artel_change(sender, instance, **kwargs):
                 'quantity': 999999,
             }
         )
-        if instance.user_id:
+        if instance.pk and instance.user_id:
             Purchase.objects.get_or_create(
                 user_id=instance.user_id,
                 item=frame_item,

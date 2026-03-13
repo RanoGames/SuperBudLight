@@ -6,13 +6,13 @@
 <div class="row mb-4 align-items-center">
     <div class="col">
         <h2>🏆 Рейтинг артели «{{ artel_name }}»</h2>
-        {% if current_user_profile.role == 'student' %}
+        {% if current_user_profile.is_student %}
             {% if current_user_rank %}
                 <p class="text-success fw-bold">Вы занимаете {{ current_user_rank }}-е место!</p>
             {% else %}
                 <p class="text-muted">Вы пока не в рейтинге.</p>
             {% endif %}
-        {% elif current_user_profile.role == 'teacher' %}
+        {% elif current_user_profile.is_teacher %}
             <p class="text-muted">Вы просматриваете рейтинг как куратор/педагог.</p>
         {% endif %}
     </div>

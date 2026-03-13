@@ -130,7 +130,7 @@
     }
 </style>
 
-{% if role == 'student' %}
+{% if is_student %}
 <div class="row align-items-start mt-4">
 
     <!-- 1. ЛЕВАЯ ЧАСТЬ: Ачивки -->
@@ -216,7 +216,7 @@
     </div>
 </div>
 
-{% elif role == 'teacher' %}
+{% elif is_teacher %}
     <div class="alert alert-success text-center">
         <h3>Панель Педагога</h3>
     </div>

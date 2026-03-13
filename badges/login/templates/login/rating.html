@@ -14,7 +14,7 @@
 </div>
 
 <!-- Блок информации о текущем пользователе -->
-{% if current_user_profile.role == 'student' %}
+{% if current_user_profile.is_student %}
     {% if current_user_rank and current_user_rank > 300 %}
         <div class="alert alert-info d-flex align-items-center shadow-sm">
             <div class="me-3 fs-3">ℹ️</div>

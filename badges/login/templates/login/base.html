@@ -87,7 +87,7 @@
                 {% if user.is_authenticated %}
                     <div class="nav-user-info d-none d-md-block">
                         {{ user.get_full_name|default:user.username }}<br>
-                        {% if user.profile.role == 'student' %}
+                        {% if user.profile.is_student %}
                             <span class="text-success">{{ user.profile.balance }} 💵</span>
                         {% else %}
                             <span class="text-primary">Педагог</span>

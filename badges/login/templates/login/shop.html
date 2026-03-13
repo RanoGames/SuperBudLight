@@ -75,7 +75,7 @@
                     <div class="d-flex justify-content-between align-items-center mt-3 pt-3 border-top">
                         <span class="fs-5 fw-bold text-primary">{{ item.price }} 💵</span>
 
-                        {% if user.profile.role == 'student' %}
+                        {% if user.profile.is_student %}
                             <!-- ПРОВЕРКА ДЛЯ РАМОК: Если уже куплена, не даем купить -->
                             {% if item.id in purchased_item_ids and item.item_type == 'frame' %}
                                 <button class="btn btn-secondary btn-sm" disabled>✅ Куплено</button>
