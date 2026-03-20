@@ -59,10 +59,12 @@ class UserAdmin(BaseUserAdmin):
         return fieldsets
 
     def save_model(self, request, obj, form, change):
-        # Сначала сохраняем самого юзера
         super().save_model(request, obj, form, change)
 
-        # Затем сохраняем роли через UserRole
+        # При создании нового юзера роли не задаются на первом шаге
+        if not change:
+            return
+
         selected_roles = form.cleaned_data.get('roles', [])
 
         try:
@@ -70,10 +72,8 @@ class UserAdmin(BaseUserAdmin):
         except UserProfile.DoesNotExist:
             profile = UserProfile.objects.create(user=obj)
 
-        # Удаляем роли которые сняли
         UserRole.objects.filter(profile=profile).exclude(role__in=selected_roles).delete()
 
-        # Добавляем новые роли
         for role in selected_roles:
             UserRole.objects.get_or_create(
                 profile=profile,
