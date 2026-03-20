@@ -1,4 +1,4 @@
-{% extends 'login/base.html' %}
+{% extends 'login/base_auth.html' %}
 
 {% block title %}Магазин{% endblock %}
 
@@ -8,7 +8,7 @@
         <h2>🏪 Магазин наград</h2>
     </div>
     <div class="col-auto">
-        <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
+        <a href="{% url 'login:home' %}" class="back-btn">← Назад</a>
     </div>
 </div>
 

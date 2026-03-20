@@ -1,232 +1,277 @@
 <!-- login/templates/login/home.html -->
-{% extends 'login/base.html' %}
+{% extends 'login/base_auth.html' %}
 {% load static %}
 
 {% block title %}Главное меню{% endblock %}
 
 {% block content %}
-
-<!-- Стили специфичные для этого экрана -->
 <style>
-    /* Подложка для ачивок */
-    .achievements-box {
-        background-color: var(--color-light-olive);
-        border-radius: 20px;
-        padding: 20px;
-        min-height: 180px;
-        display: flex;
-        flex-wrap: wrap;
-        gap: 15px;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 10px;
+    :root {
+        --card-radius: 22px;
+        --olive: #A4B66B;
+        --light-olive: #DDE6B6;
+        --dark-olive: #5F733C;
+        --mid-olive: #49743F;
     }
 
-    .achievements-btn {
-        background-color: var(--color-light-olive);
-        border-radius: 20px;
-        width: 100%;
-        text-align: center;
-        padding: 5px;
-        color: #5F733C;
-        font-weight: 400;
-        font-size: 1.2rem;
-        display: block;
-        text-decoration: none;
-    }
-
-    /* Информация о пользователе (Центр) */
-    .user-info-text {
-        font-size: 1.8rem;
-        line-height: 1.2;
-        color: #49743F;
-    }
-    .user-age {
-        font-size: 1.5rem;
-        color: #6E6E6E;
-        margin-top: 10px;
-    }
-    .birth-date {
-        font-size: 1rem;
-        color: #888;
-        margin-left: 10px;
-        text-decoration: underline;
-    }
-
-    /* Аватарка (Справа) */
-    .avatar-container {
+    /* ── Аватар ── */
+    .avatar-wrap {
         position: relative;
-        width: 220px;
-        height: 220px;
-        margin: 0 auto;
+        width: 240px;
+        height: 240px;
+        flex-shrink: 0;
     }
-    /* Сама фотка */
-    .avatar-img {
-        width: 160px;
-        height: 160px;
-        /* ИЗМЕНЕНИЕ: Было 50%, стало 15px для квадрата с углами */
+    .avatar-photo {
+        width: 174px;
+        height: 174px;
         object-fit: cover;
         position: absolute;
-        top: 30px;
-        left: 30px;
+        top: 33px;
+        left: 33px;
         z-index: 1;
     }
-    /* Рамка */
-    .frame-img {
-        width: 220px;
-        height: 220px;
+    .avatar-placeholder {
+        width: 174px;
+        height: 174px;
+        background: #ccc;
         position: absolute;
-        top: 0;
-        left: 0;
+        top: 33px;
+        left: 33px;
+        z-index: 1;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    .frame-img {
+        width: 240px;
+        height: 240px;
+        position: absolute;
+        top: 0; left: 0;
         z-index: 2;
         pointer-events: none;
     }
-    /* Иконка артели */
-    .artel-badge {
-        width: 70px;
-        height: 70px;
-        border-radius: 50%; /* Кружок артели оставляем круглым */
-        border: 4px solid #8C7853;
-        background-color: #DDE6B6;
-        position: absolute;
-        bottom: 10px;
-        left: -10px;
-        z-index: 3;
-        overflow: hidden;
-    }
-    .artel-badge img {
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
 
-    .rank-text {
-        text-align: center;
-        color: #A4B66B;
-        font-size: 1.5rem;
+    /* ── Имя / возраст ── */
+    .user-name {
+        font-size: 2.4rem;
+        font-weight: 700;
+        color: #333;
+        line-height: 1.2;
+    }
+    .user-age-date {
+        font-size: 1rem;
+        color: #999;
         margin-top: 10px;
+        font-weight: 400;
+    }
+    .user-age-big {
+        font-size: 1.8rem;
+        color: #555;
+        font-weight: 700;
+        margin-top: 4px;
     }
 
-    /* Нижние кнопки меню */
+    /* ── Правые кнопки ── */
+    .side-btn {
+        background-color: var(--light-olive);
+        color: var(--dark-olive);
+        border-radius: 16px;
+        text-decoration: none;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 14px 28px;
+        font-weight: 700;
+        font-size: 1.2rem;
+        transition: transform 0.15s, background 0.15s;
+        text-align: center;
+        min-height: 64px;
+        min-width: 180px;
+    }
+    .side-btn:hover {
+        transform: scale(1.04);
+        background-color: #cfd99a;
+        color: var(--mid-olive);
+    }
+    .side-btn .rating-num {
+        font-size: 2rem;
+        font-weight: 800;
+        color: var(--dark-olive);
+        line-height: 1;
+    }
+    .side-btn .rating-label {
+        font-size: 0.95rem;
+        font-weight: 600;
+        color: var(--dark-olive);
+    }
+
+    /* ── Блок ачивок ── */
+    .achievements-section {
+        background: #EBEBEB;
+        border-radius: var(--card-radius);
+        padding: 30px 36px;
+        margin-top: 36px;
+    }
+    .achievements-title {
+        font-size: 2.2rem;
+        font-weight: 700;
+        color: var(--mid-olive);
+        margin-bottom: 20px;
+    }
+    .ach-row {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-bottom: 10px;
+    }
+    .ach-icon {
+        width: 68px;
+        height: 68px;
+        object-fit: contain;
+        filter: drop-shadow(1px 2px 3px rgba(0,0,0,0.18));
+        transition: transform 0.15s;
+        cursor: default;
+    }
+    .ach-icon:hover { transform: scale(1.15); }
+    .ach-empty {
+        font-size: 1rem;
+        color: #aaa;
+        font-style: italic;
+    }
+
+    /* ── Кнопки педагога ── */
     .nav-btn {
-        background-color: var(--color-light-olive);
-        color: #5F733C;
-        border-radius: 15px;
-        padding: 15px 0;
-        font-size: 1.4rem;
+        background-color: var(--light-olive);
+        color: var(--dark-olive);
+        border-radius: 18px;
+        padding: 20px 0;
+        font-size: 1.3rem;
+        font-weight: 700;
         text-align: center;
         text-decoration: none;
-        transition: transform 0.2s;
         display: flex;
         align-items: center;
         justify-content: center;
-        height: 100%;
         width: 100%;
+        transition: transform 0.15s, background 0.15s;
     }
     .nav-btn:hover {
         transform: scale(1.03);
         background-color: #cfd99a;
-        color: #49743F;
+        color: var(--mid-olive);
     }
+
+    /* ── Кнопка "Все ачивки" ── */
+    .all-ach-btn {
+        display: inline-block;
+        background: var(--light-olive);
+        color: var(--dark-olive);
+        border-radius: 14px;
+        padding: 10px 28px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 1.05rem;
+        margin-top: 16px;
+        transition: background 0.15s;
+    }
+    .all-ach-btn:hover { background: #cfd99a; color: var(--mid-olive); }
 </style>
 
 {% if is_student %}
-<div class="row align-items-start mt-4">
 
-    <!-- 1. ЛЕВАЯ ЧАСТЬ: Ачивки -->
-    <div class="col-lg-5 mb-4">
-        <div class="achievements-box shadow-sm">
-            {% if displayed_achievements %}
-                {% for disp in displayed_achievements %}
-                    {% if disp.achievement.icon %}
-                        <img src="{{ disp.achievement.icon.url }}"
-                             alt="{{ disp.achievement.name }}"
-                             title="{{ disp.achievement.name }}"
-                             style="width: 70px; height: 70px; object-fit: contain; filter: drop-shadow(2px 2px 2px rgba(0,0,0,0.2));">
-                    {% else %}
-                        <div class="bg-warning rounded-circle d-flex align-items-center justify-content-center fw-bold text-white"
-                             style="width: 60px; height: 60px; font-size: 1.2rem;">
-                            {{ disp.achievement.name|slice:":1" }}
-                        </div>
-                    {% endif %}
-                {% endfor %}
-            {% else %}
-                <span class="text-muted text-center w-100">Нет выбранных ачивок</span>
-            {% endif %}
-        </div>
-        <a href="{% url 'login:achievements_catalog' %}" class="achievements-btn">Ачивки</a>
+<!-- ══ ВЕРХНИЙ БЛОК ══ -->
+<div class="d-flex align-items-center gap-5 flex-wrap justify-content-center">
+
+    <!-- Аватарка с рамкой -->
+    <div class="avatar-wrap flex-shrink-0">
+        {% if profile.active_frame and profile.active_frame.image %}
+            <img src="{{ profile.active_frame.image.url }}" class="frame-img" alt="Рамка">
+        {% endif %}
+        {% if profile.avatar %}
+            <img src="{{ profile.avatar.url }}" class="avatar-photo" alt="Аватар">
+        {% else %}
+            <div class="avatar-placeholder">
+                <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="#888" viewBox="0 0 16 16">
+                    <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.029 10 8 10c-2.029 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                </svg>
+            </div>
+        {% endif %}
     </div>
 
-    <!-- 2. ЦЕНТР: Информация -->
-    <div class="col-lg-3 mb-4 ps-lg-5">
-        <div class="user-info-text">
-            {% with name_parts=user.last_name|add:" "|add:user.first_name %}
-                <div>{{ user.last_name|default:"Фамилия" }}</div>
-                <div>{{ user.first_name|default:"Имя" }}</div>
-            {% endwith %}
+    <!-- Имя + возраст -->
+    <div class="flex-grow-1" style="min-width: 180px;">
+        <div class="user-name">
+            {{ user.last_name|default:"Фамилия" }}<br>
+            {{ user.first_name|default:"Имя" }}<br>
+            {% if user.profile.patronymic %}{{ user.profile.patronymic }}{% endif %}
         </div>
-
-        <div class="user-age">
-            {{ age|default:"0" }} лет
-            <span class="birth-date">{{ profile.birth_date|date:"d.m.Y"|default:"" }}</span>
-        </div>
+        {% if profile.birth_date %}
+            <div class="user-age-date">{{ profile.birth_date|date:"d.m.Y" }}</div>
+        {% endif %}
+        <div class="user-age-big">{{ age|default:"0" }} лет</div>
     </div>
 
-    <!-- 3. ПРАВАЯ ЧАСТЬ: Аватарка (Квадратная) -->
-    <div class="col-lg-4 mb-4 text-center">
-        <div class="avatar-container">
-            <!-- Рамка (Теперь она главная) -->
-            {% if profile.active_frame and profile.active_frame.image %}
-                <img src="{{ profile.active_frame.image.url }}" class="frame-img">
-            {% endif %}
-
-            <!-- Фото (Квадратное) -->
-            {% if profile.avatar %}
-                <img src="{{ profile.avatar.url }}" class="avatar-img">
-            {% else %}
-                <div class="avatar-img bg-secondary d-flex align-items-center justify-content-center text-white fs-1">👤</div>
-            {% endif %}
-        </div>
-
-        <div class="rank-text">
-            {{ profile.rank|default:"Новичок" }}
-        </div>
+    <!-- Правые кнопки -->
+    <div class="d-flex flex-column gap-3 flex-shrink-0">
+        <a href="{% url 'login:artel_rating' %}" class="side-btn">КвантоГород</a>
+        <a href="{% url 'login:shop' %}" class="side-btn">Магазин</a>
+        <a href="{% url 'login:rating' %}" class="side-btn">
+            <span class="rating-label">Рейтинг</span>
+            <span class="rating-num">{{ profile.rating_points|default:"0" }}</span>
+        </a>
     </div>
 </div>
 
-<!-- 4. НИЖНЕЕ МЕНЮ -->
-<div class="row g-4 mt-5 justify-content-center">
-    <div class="col-md-3 col-6">
-        <a href="{% url 'login:rating' %}" class="nav-btn">Рейтинг</a>
-    </div>
-    <div class="col-md-3 col-6">
-        <a href="{% url 'login:shop' %}" class="nav-btn">Магазин</a>
-    </div>
-    <div class="col-md-3 col-6">
-        <a href="{% url 'login:artel_rating' %}" class="nav-btn">Битва Артелей</a>
-    </div>
-    <div class="col-md-3 col-6">
-        <a href="{% url 'login:achievements_catalog' %}" class="nav-btn">Ачивки</a>
-    </div>
-</div>
+<!-- ══ БЛОК АЧИВОК ══ -->
+<div class="achievements-section">
+    <div class="achievements-title">Мои ачивки:</div>
 
-<div class="row g-4 mt-2 justify-content-center">
-     <div class="col-md-4 col-12">
-        <a href="{% url 'login:profile' %}" class="nav-btn bg-white border border-success text-success">Профиль</a>
-    </div>
+    {% if displayed_achievements %}
+        <div class="ach-row">
+            {% for disp in displayed_achievements %}
+                {% if disp.achievement.icon %}
+                    <img src="{{ disp.achievement.icon.url }}"
+                         class="ach-icon"
+                         alt="{{ disp.achievement.name }}"
+                         title="{{ disp.achievement.name }}">
+                {% else %}
+                    <div class="d-flex align-items-center justify-content-center fw-bold text-white rounded-circle"
+                         style="width:68px;height:68px;background:var(--olive);font-size:1.2rem;"
+                         title="{{ disp.achievement.name }}">
+                        {{ disp.achievement.name|slice:":1" }}
+                    </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="ach-empty">Нет выбранных ачивок. <a href="{% url 'login:achievements_catalog' %}" style="color:var(--dark-olive);">Выбрать</a></p>
+    {% endif %}
+
+    <a href="{% url 'login:achievements_catalog' %}" class="all-ach-btn">Все ачивки</a>
 </div>
 
 {% elif is_teacher %}
-    <div class="alert alert-success text-center">
-        <h3>Панель Педагога</h3>
+<div>
+    <div class="text-center mb-4 py-3"
+         style="background:var(--light-olive);border-radius:var(--card-radius);">
+        <h3 style="color:var(--dark-olive);margin:0;">Панель Педагога</h3>
     </div>
-    <div class="row g-3">
-        <div class="col-md-4"><a href="{% url 'login:teacher_students' %}" class="nav-btn">Мои ученики</a></div>
-        <div class="col-md-4"><a href="{% url 'login:award_points' %}" class="nav-btn">Начислить очки</a></div>
-        <div class="col-md-4"><a href="{% url 'login:manage_achievements' %}" class="nav-btn">Создать ачивку</a></div>
-        <!-- КНОПКА ДЛЯ ВЫДАЧИ АЧИВОК -->
-        <div class="col-md-4"><a href="{% url 'login:assign_achievement' %}" class="nav-btn bg-warning text-dark">Назначить ачивку</a></div>
+    <div class="row g-4">
+        <div class="col-md-6">
+            <a href="{% url 'login:teacher_students' %}" class="nav-btn">Мои ученики</a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'login:award_points' %}" class="nav-btn">Начислить очки</a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'login:manage_achievements' %}" class="nav-btn">Создать ачивку</a>
+        </div>
+        <div class="col-md-6">
+            <a href="{% url 'login:assign_achievement' %}" class="nav-btn" style="background:#f0c040;color:#5a3e00;">Назначить ачивку</a>
+        </div>
     </div>
+</div>
 {% endif %}
 
 {% endblock %}

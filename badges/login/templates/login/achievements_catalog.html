@@ -1,4 +1,4 @@
-{% extends 'login/base.html' %}
+{% extends 'login/base_auth.html' %}
 
 {% block title %}Достижения{% endblock %}
 
@@ -9,7 +9,7 @@
         <p class="text-muted mb-0">Все доступные награды и условия их получения.</p>
     </div>
     <div class="col-auto">
-        <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
+        <a href="{% url 'login:home' %}" class="back-btn">← Назад</a>
     </div>
 </div>
 
