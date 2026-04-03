@@ -31,8 +31,8 @@
                     <h5 class="card-title">{{ ach.name }}</h5>
                     <p class="text-muted">{{ ach.description|truncatewords:15 }}</p>
                     <div>
-                        <a href="{% url 'login:edit_achievement' ach.id %}" class="btn btn-sm btn-outline-warning">Редактировать</a>
-                        <a href="{% url 'login:delete_achievement' ach.id %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+                        <a href="{% url 'achievements:edit_achievement' ach.id %}" class="btn btn-sm btn-outline-warning">Редактировать</a>
+                        <a href="{% url 'achievements:delete_achievement' ach.id %}" class="btn btn-sm btn-outline-danger">Удалить</a>
                     </div>
                 </div>
             </div>

@@ -38,6 +38,10 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
     'login',
+    'profile_app.apps.ProfileAppConfig',
+    'shop.apps.ShopConfig',
+    'ratings.apps.RatingsConfig',
+    'achievements.apps.AchievementsConfig',
 ]
 
 MIDDLEWARE = [

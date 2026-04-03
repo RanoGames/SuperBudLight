@@ -39,7 +39,7 @@
                             <td>{{ profile.get_artel_display|default:"—" }}</td>
                             <td><small class="text-muted">{{ profile.rank|default:"—" }}</small></td>
                             <td class="text-end">
-                                <a href="{% url 'login:edit_student' profile.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                                <a href="{% url 'profile_app:edit_student' profile.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
                             </td>
                         </tr>
                         {% endfor %}

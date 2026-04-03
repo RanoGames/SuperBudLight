@@ -214,9 +214,9 @@
 
     <!-- Правые кнопки -->
     <div class="d-flex flex-column gap-3 flex-shrink-0">
-        <a href="{% url 'login:artel_rating' %}" class="side-btn">КвантоГород</a>
-        <a href="{% url 'login:shop' %}" class="side-btn">Магазин</a>
-        <a href="{% url 'login:rating' %}" class="side-btn">
+        <a href="{% url 'ratings:artel_rating' %}" class="side-btn">КвантоГород</a>
+        <a href="{% url 'shop:shop' %}" class="side-btn">Магазин</a>
+        <a href="{% url 'ratings:rating' %}" class="side-btn">
             <span class="rating-label">Рейтинг</span>
             <span class="rating-num">{{ profile.rating_points|default:"0" }}</span>
         </a>
@@ -245,10 +245,10 @@
             {% endfor %}
         </div>
     {% else %}
-        <p class="ach-empty">Нет выбранных ачивок. <a href="{% url 'login:achievements_catalog' %}" style="color:var(--dark-olive);">Выбрать</a></p>
+        <p class="ach-empty">Нет выбранных ачивок. <a href="{% url 'achievements:achievements_catalog' %}" style="color:var(--dark-olive);">Выбрать</a></p>
     {% endif %}
 
-    <a href="{% url 'login:achievements_catalog' %}" class="all-ach-btn">Все ачивки</a>
+    <a href="{% url 'achievements:achievements_catalog' %}" class="all-ach-btn">Все ачивки</a>
 </div>
 
 {% elif is_teacher %}
@@ -259,16 +259,16 @@
     </div>
     <div class="row g-4">
         <div class="col-md-6">
-            <a href="{% url 'login:teacher_students' %}" class="nav-btn">Мои ученики</a>
+            <a href="{% url 'profile_app:teacher_students' %}" class="nav-btn">Мои ученики</a>
         </div>
         <div class="col-md-6">
-            <a href="{% url 'login:award_points' %}" class="nav-btn">Начислить очки</a>
+            <a href="{% url 'profile_app:award_points' %}" class="nav-btn">Начислить очки</a>
         </div>
         <div class="col-md-6">
-            <a href="{% url 'login:manage_achievements' %}" class="nav-btn">Создать ачивку</a>
+            <a href="{% url 'achievements:manage_achievements' %}" class="nav-btn">Создать ачивку</a>
         </div>
         <div class="col-md-6">
-            <a href="{% url 'login:assign_achievement' %}" class="nav-btn" style="background:#f0c040;color:#5a3e00;">Назначить ачивку</a>
+            <a href="{% url 'achievements:assign_achievement' %}" class="nav-btn" style="background:#f0c040;color:#5a3e00;">Назначить ачивку</a>
         </div>
     </div>
 </div>

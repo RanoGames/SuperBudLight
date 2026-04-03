@@ -19,13 +19,13 @@
 <!-- ВКЛАДКИ -->
 <ul class="nav nav-tabs mb-4">
   <li class="nav-item">
-    <a class="nav-link {% if current_tab == 'cosmetic' %}active fw-bold{% endif %}" href="{% url 'login:shop' %}?tab=cosmetic">💄 Косметика</a>
+    <a class="nav-link {% if current_tab == 'cosmetic' %}active fw-bold{% endif %}" href="{% url 'shop:shop' %}?tab=cosmetic">💄 Косметика</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link {% if current_tab == 'frame' %}active fw-bold{% endif %}" href="{% url 'login:shop' %}?tab=frame">🖼️ Рамки</a>
+    <a class="nav-link {% if current_tab == 'frame' %}active fw-bold{% endif %}" href="{% url 'shop:shop' %}?tab=frame">🖼️ Рамки</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link {% if current_tab == 'merch' %}active fw-bold{% endif %} {% if not can_buy_merch and current_tab != 'merch' %}text-muted{% endif %}" href="{% url 'login:shop' %}?tab=merch">
+    <a class="nav-link {% if current_tab == 'merch' %}active fw-bold{% endif %} {% if not can_buy_merch and current_tab != 'merch' %}text-muted{% endif %}" href="{% url 'shop:shop' %}?tab=merch">
        {% if can_buy_merch %}🔥 Мерч{% else %}🔒 Мерч{% endif %}
     </a>
   </li>
@@ -80,7 +80,7 @@
                             {% if item.id in purchased_item_ids and item.item_type == 'frame' %}
                                 <button class="btn btn-secondary btn-sm" disabled>✅ Куплено</button>
                             {% elif user_balance >= item.price %}
-                                <form action="{% url 'login:buy_item' item.id %}" method="post">
+                                <form action="{% url 'shop:buy_item' item.id %}" method="post">
                                     {% csrf_token %}
                                     <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Купить {{ item.name }}?')">Купить</button>
                                 </form>

@@ -64,14 +64,14 @@
                     <h6 class="mt-4 border-top pt-3">Мои рамки</h6>
                     <div class="d-flex flex-wrap justify-content-center gap-2">
                         <!-- Кнопка "Снять" -->
-                        <form action="{% url 'login:equip_frame' %}" method="post">
+                        <form action="{% url 'profile_app:equip_frame' %}" method="post">
                             {% csrf_token %}
                             <input type="hidden" name="action" value="unequip">
                             <button type="submit" class="btn btn-sm btn-light border" title="Снять рамку">❌</button>
                         </form>
 
                         {% for frame in owned_frames %}
-                            <form action="{% url 'login:equip_frame' %}" method="post">
+                            <form action="{% url 'profile_app:equip_frame' %}" method="post">
                                 {% csrf_token %}
                                 <input type="hidden" name="frame_id" value="{{ frame.id }}">
                                 <input type="hidden" name="action" value="equip">

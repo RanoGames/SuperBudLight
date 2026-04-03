@@ -69,7 +69,7 @@ document.querySelectorAll('.toggle-btn').forEach(btn => {
     btn.addEventListener('click', function() {
         const id = this.dataset.id;
         const action = this.dataset.action;
-        fetch('{% url "login:toggle_displayed_achievement" %}', {
+        fetch('{% url "achievements:toggle_displayed_achievement" %}', {
             method: 'POST',
             headers: {'X-CSRFToken': '{{ csrf_token }}', 'Content-Type': 'application/x-www-form-urlencoded'},
             body: `achievement_id=${id}&action=${action}`
