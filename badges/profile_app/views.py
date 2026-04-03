@@ -118,7 +118,11 @@ def edit_student_view(request, student_id):
     else:
         form = StudentProfileEditForm(instance=student_profile, teacher_user=request.user)
 
-    return render(request, 'login/edit_student.html', {'form': form, 'student': student_profile.user})
+    return render(request, 'login/edit_student.html', {
+        'form': form,
+        'student': student_profile.user,
+        'student_profile_id': student_profile.id,
+    })
 
 
 @login_required
@@ -151,3 +155,20 @@ def award_points_view(request):
         form = AwardPointsForm(teacher_user=request.user)
 
     return render(request, 'login/award_points.html', {'form': form})
+
+
+@login_required
+def delete_student_view(request, student_id):
+    profile = getattr(request.user, 'profile', None)
+    if not profile or not profile.is_teacher():
+        raise PermissionDenied("Только педагоги могут удалять учеников.")
+    student_profile = get_object_or_404(
+        UserProfile.objects.filter(roles__name='student'), id=student_id
+    )
+    if not student_profile.group or student_profile.group.teacher != request.user:
+        raise PermissionDenied("Вы не можете удалить этого ученика.")
+    if request.method == 'POST':
+        student_profile.user.delete()
+        messages.success(request, "Ученик удалён.")
+        return redirect('profile_app:teacher_students')
+    return render(request, 'login/delete_student.html', {'student': student_profile.user})

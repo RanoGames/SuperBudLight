@@ -1,56 +1,55 @@
 {% extends 'login/base.html' %}
-
 {% block title %}Мои ученики{% endblock %}
-
 {% block content %}
-<div class="row mb-4 align-items-center">
-    <div class="col">
-        <h2>👥 Мои ученики</h2>
-        <p class="text-muted mb-0">Управление профилями и просмотр статистики.</p>
-    </div>
-    <div class="col-auto">
-        <a href="{% url 'login:home' %}" class="btn btn-outline-secondary">Назад</a>
-    </div>
-</div>
 
-<div class="card shadow-sm">
-    <div class="card-body p-0">
-        {% if students %}
-            <div class="table-responsive">
-                <table class="table table-hover mb-0 align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>ФИО / Логин</th>
-                            <th>Группа</th>
-                            <th class="text-center">Баланс</th>
-                            <th class="text-center">Рейтинг</th>
-                            <th>Артель</th>
-                            <th>Звание</th>
-                            <th class="text-end">Действия</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for profile in students %}
-                        <tr>
-                            <td class="fw-bold">{{ profile.user.get_full_name|default:profile.user.username }}</td>
-                            <td><span class="badge bg-light text-dark border">{{ profile.group.name }}</span></td>
-                            <td class="text-center text-success fw-bold">{{ profile.balance }}</td>
-                            <td class="text-center text-primary fw-bold">{{ profile.rating_points }}</td>
-                            <td>{{ profile.get_artel_display|default:"—" }}</td>
-                            <td><small class="text-muted">{{ profile.rank|default:"—" }}</small></td>
-                            <td class="text-end">
-                                <a href="{% url 'profile_app:edit_student' profile.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
-            </div>
-        {% else %}
-            <div class="p-5 text-center text-muted">
-                <h4>В ваших группах пока нет учеников.</h4>
-            </div>
-        {% endif %}
-    </div>
+<style>
+  .students-title { color: var(--color-dark-olive); font-size: 1.8rem; font-weight: 800; margin-bottom: 20px; }
+  .student-list { display: flex; flex-direction: column; gap: 10px; }
+  .student-row {
+    background: #e8edcf;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    padding: 0 16px;
+    height: 54px;
+  }
+  .student-num {
+    background: var(--color-dark-olive);
+    color: #fff;
+    border-radius: 8px;
+    width: 34px; height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1rem;
+    flex-shrink: 0;
+    margin-right: 16px;
+  }
+  .student-name { flex: 1; font-weight: 600; color: #333; }
+  .student-score {
+    background: var(--color-dark-olive);
+    color: #fff;
+    border-radius: 8px;
+    padding: 6px 14px;
+    font-weight: 800;
+    font-size: 1rem;
+    cursor: pointer;
+  }
+  .student-score:hover { background: #4a5c2e; }
+</style>
+
+<h2 class="students-title">Список учеников:</h2>
+
+{% if students %}
+<div class="student-list">
+  {% for profile in students %}
+  <div class="student-row">
+    <div class="student-num">{{ forloop.counter }}</div>
+    <div class="student-name">{{ profile.user.get_full_name|default:profile.user.username }}</div>
+    <a href="{% url 'profile_app:edit_student' profile.id %}" class="student-score">{{ profile.rating_points }}</a>
+  </div>
+  {% endfor %}
 </div>
+{% else %}
+<p class="text-muted">В ваших группах пока нет учеников.</p>
+{% endif %}
+
 {% endblock %}

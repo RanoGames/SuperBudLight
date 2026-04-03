@@ -1,0 +1,43 @@
+{% extends 'login/base.html' %}
+{% block title %}Удалить ученика{% endblock %}
+{% block content %}
+
+<style>
+  .del-card {
+    background: #8a9e5a;
+    border-radius: 16px;
+    padding: 48px 36px;
+    max-width: 380px;
+    margin: 60px auto;
+    text-align: center;
+  }
+  .del-card h3 { color: #fff; font-weight: 800; font-size: 1.4rem; margin-bottom: 8px; }
+  .del-card p { color: #fff; font-weight: 600; margin-bottom: 28px; }
+  .btn-action {
+    background: #5f733c;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-weight: 700;
+    font-family: inherit;
+    font-size: 1rem;
+    cursor: pointer;
+    margin: 0 6px;
+    text-decoration: none;
+    display: inline-block;
+  }
+  .btn-action:hover { background: #4a5c2e; color: #fff; }
+</style>
+
+<div class="del-card">
+  <h3>Удалить ученика?</h3>
+  <p>{{ student.get_full_name|default:student.username }}</p>
+  <a href="{% url 'profile_app:teacher_students' %}" class="btn-action">Оставить</a>
+  <form method="post" style="display:inline;">
+    {% csrf_token %}
+    <button type="submit" class="btn-action">Удалить</button>
+  </form>
+</div>
+
+{% endblock %}

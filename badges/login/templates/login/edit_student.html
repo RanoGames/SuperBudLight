@@ -1,89 +1,108 @@
-<!-- login/templates/login/edit_student.html -->
 {% extends 'login/base.html' %}
-
-{% block title %}Редактировать {{ student.username }}{% endblock %}
-
+{% block title %}Редактирование профиля{% endblock %}
 {% block content %}
-<h2>Редактировать профиль: {{ student.get_full_name|default:student.username }}</h2>
 
-<form method="post">
+<style>
+  .edit-card {
+    background: #dde6b6;
+    border-radius: 16px;
+    padding: 32px 28px;
+    max-width: 480px;
+    margin: 0 auto;
+  }
+  .edit-card h3 {
+    text-align: center;
+    color: var(--color-dark-olive);
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 24px;
+    font-size: 1.1rem;
+  }
+  .edit-label { font-weight: 700; color: #333; margin-bottom: 4px; }
+  .edit-input {
+    background: #c8d89a;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    width: 100%;
+    font-family: inherit;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 14px;
+  }
+  .edit-input:focus { outline: 2px solid var(--color-dark-olive); }
+  .edit-card input, .edit-card select {
+    background: #c8d89a;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 14px;
+    width: 100%;
+    font-family: inherit;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 14px;
+  }
+  .edit-card input:focus, .edit-card select:focus { outline: 2px solid var(--color-dark-olive); }
+  .hint { font-size: 0.75rem; color: #666; margin-top: -10px; margin-bottom: 10px; }
+  .btn-edit {
+    background: var(--color-dark-olive);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+  }
+  .btn-edit:hover { background: #4a5c2e; }
+  .btn-del {
+    background: #8a9e5a;
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    padding: 10px 28px;
+    font-weight: 700;
+    font-family: inherit;
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .btn-del:hover { background: #6b7d45; color:#fff; }
+</style>
+
+<div class="edit-card">
+  <h3>Редактирование профиля</h3>
+  <form method="post">
     {% csrf_token %}
 
-    <!-- Основные данные -->
-    <div class="row mb-3">
-        <div class="col-md-6">
-            {{ form.birth_date.label_tag }}
-            {{ form.birth_date }}
-            {% if form.birth_date.errors %}<div class="text-danger">{{ form.birth_date.errors }}</div>{% endif %}
-        </div>
-        <div class="col-md-6">
-            {{ form.group.label_tag }}
-            {{ form.group }}
-            {% if form.group.errors %}<div class="text-danger">{{ form.group.errors }}</div>{% endif %}
-        </div>
+    <div class="edit-label">Ученик:</div>
+    <input class="edit-input" type="text" value="{{ student.get_full_name|default:student.username }}" disabled>
+
+    {% for field in form %}
+      <div class="edit-label">{{ field.label }}:</div>
+      <div>{{ field }}</div>
+      {% if field.help_text %}<div class="hint">{{ field.help_text }}</div>{% endif %}
+      {% if field.errors %}<div class="text-danger" style="margin-top:-10px;margin-bottom:8px;">{{ field.errors }}</div>{% endif %}
+    {% endfor %}
+
+    <div class="d-flex justify-content-between mt-3">
+      <button type="submit" class="btn-edit">Редактировать</button>
+      <button type="button" class="btn-del" onclick="document.getElementById('del-modal').style.display='flex'">Удалить</button>
     </div>
+  </form>
+</div>
 
-    <div class="row mb-3">
-        <div class="col-md-6">
-            {{ form.balance.label_tag }}
-            {{ form.balance }}
-            {% if form.balance.errors %}<div class="text-danger">{{ form.balance.errors }}</div>{% endif %}
-        </div>
-        <div class="col-md-6">
-            {{ form.rating_points.label_tag }}
-            {{ form.rating_points }}
-            {% if form.rating_points.errors %}<div class="text-danger">{{ form.rating_points.errors }}</div>{% endif %}
-        </div>
-    </div>
+<!-- Модальное окно подтверждения удаления -->
+<div id="del-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.4); z-index:1000; align-items:center; justify-content:center;">
+  <div style="background:#8a9e5a; border-radius:16px; padding:48px 36px; max-width:380px; width:90%; text-align:center;">
+    <h3 style="color:#fff; font-weight:800; font-size:1.4rem; margin-bottom:8px;">Удалить ученика?</h3>
+    <p style="color:#fff; font-weight:600; margin-bottom:28px;">{{ student.get_full_name|default:student.username }}</p>
+    <button onclick="document.getElementById('del-modal').style.display='none'" class="btn-del" style="margin-right:12px;">Оставить</button>
+    <form method="post" action="{% url 'profile_app:delete_student' student_profile_id %}" style="display:inline;">
+      {% csrf_token %}
+      <button type="submit" class="btn-del">Удалить</button>
+    </form>
+  </div>
+</div>
 
-    <div class="mb-3">
-        {{ form.artel.label_tag }}
-        {{ form.artel }}
-        {% if form.artel.errors %}<div class="text-danger">{{ form.artel.errors }}</div>{% endif %}
-    </div>
-
-    <div class="mb-3">
-        {{ form.rank.label_tag }}
-        {{ form.rank }}
-        {% if form.rank.errors %}<div class="text-danger">{{ form.rank.errors }}</div>{% endif %}
-    </div>
-
-    <!-- === НОВЫЕ ПОЛЯ: очки по 5 категориям === -->
-    <h4 class="mt-4">Прогресс-бары (очки от 0 до 100)</h4>
-
-    <div class="row mb-3">
-        <div class="col-md-4">
-            {{ form.volunteering_points.label_tag }}
-            {{ form.volunteering_points }}
-            {% if form.volunteering_points.errors %}<div class="text-danger">{{ form.volunteering_points.errors }}</div>{% endif %}
-        </div>
-        <div class="col-md-4">
-            {{ form.contests_points.label_tag }}
-            {{ form.contests_points }}
-            {% if form.contests_points.errors %}<div class="text-danger">{{ form.contests_points.errors }}</div>{% endif %}
-        </div>
-        <div class="col-md-4">
-            {{ form.academic_points.label_tag }}
-            {{ form.academic_points }}
-            {% if form.academic_points.errors %}<div class="text-danger">{{ form.academic_points.errors }}</div>{% endif %}
-        </div>
-    </div>
-
-    <div class="row mb-3">
-        <div class="col-md-6">
-            {{ form.extracurricular_points.label_tag }}
-            {{ form.extracurricular_points }}
-            {% if form.extracurricular_points.errors %}<div class="text-danger">{{ form.extracurricular_points.errors }}</div>{% endif %}
-        </div>
-        <div class="col-md-6">
-            {{ form.projects_points.label_tag }}
-            {{ form.projects_points }}
-            {% if form.projects_points.errors %}<div class="text-danger">{{ form.projects_points.errors }}</div>{% endif %}
-        </div>
-    </div>
-
-    <!-- Кнопки -->
-    <button type="submit" class="btn btn-success">Сохранить</button>
-    <a href="{% url 'profile_app:teacher_students' %}" class="btn btn-secondary">Отмена</a>
-</form>
 {% endblock %}
